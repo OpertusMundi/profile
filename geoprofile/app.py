@@ -53,10 +53,9 @@ def executor_callback(future):
     ticket, result, success, comment = future.result()
     if result is not None:
         rel_path = datetime.now().strftime("%y%m%d")
-        mkdir(path.join(getenv('OUTPUT_DIR'), rel_path))
         rel_path = path.join(rel_path, ticket)
+        mkdir(path.join(getenv('OUTPUT_DIR'), rel_path))
         filepath = path.join(getenv('OUTPUT_DIR'), rel_path, "result.json")
-        print(result)
         result.to_file(filepath)
     else:
         filepath = None
@@ -100,7 +99,6 @@ def enqueue(ticket: str, src_path: str, file_type: str) -> tuple:
         if file_type == 'netcdf':
             ds = bdv.io.read_file(src_path, type='netcdf', lat_attr='lat')
             result = ds.report(sample_bbox=[-20, -20, 20, 20], sample_filename='sample.nc')
-            print(result)
         elif file_type == 'raster':
             ds = RasterData.from_file(src_path)
             result = ds.report()
