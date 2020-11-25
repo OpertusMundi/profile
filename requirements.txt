@@ -1,4 +1,3 @@
-pyproj>=2.6.0,<2.7.0
 Flask==1.1.2
 Flask-WTF==0.14.3
 Flask-Executor==0.9.4
