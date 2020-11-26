@@ -27,14 +27,14 @@ RUN pip3 install --no-cache-dir --user --no-warn-script-location -r requirements
 
 RUN python setup.py install --user
 
-COPY wsgi.py docker-command.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/wsgi.py /usr/local/bin/docker-command.sh
+COPY wsgi.py docker-command-dev.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/wsgi.py /usr/local/bin/docker-command-dev.sh
 
 EXPOSE 5000
 EXPOSE 5443
 
-ENV FLASK_APP="geoprofile" FLASK_ENV="production" FLASK_DEBUG="false"
+ENV FLASK_ENV="production" FLASK_DEBUG="false"
 ENV OUTPUT_DIR="/var/local/geoprofile/output/"
 ENV TLS_CERTIFICATE="" TLS_KEY=""
 
-CMD ["/usr/local/bin/docker-command.sh"]
+CMD ["/usr/local/bin/docker-command-dev.sh"]
