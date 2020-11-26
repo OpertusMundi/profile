@@ -2,7 +2,6 @@ __pycache__/
 instance/
 .idea
 set_env_vars.sh
-accounting.log
 *.pyc
 *.egg-info
 build/
@@ -10,3 +9,9 @@ dist/
 certs/
 data/
 output/
+logs/
+*.log
+.env
+compose-dev.yml
+compose-dev.yml
+compose-testing.yml
