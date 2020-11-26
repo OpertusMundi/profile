@@ -12,6 +12,3 @@ output/
 logs/
 *.log
 .env
-compose-dev.yml
-compose-dev.yml
-compose-testing.yml
