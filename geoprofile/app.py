@@ -27,15 +27,13 @@ mainLogger, accountLogger = getLoggers()
 # OpenAPI documentation
 spec = APISpec(
     title="Profile API",
-    version="0.0.1",
+    version=getenv('VERSION'),
     info=dict(
-        description="A simple service to transform a spatial (vector or raster) file. "
-                    "Transformation includes reprojection into another spatial reference system "
-                    "(and resampling in case of raster reprojection) and/or change of the file format "
-                    "(e.g. Shapefile into CSV).",
-        contact={"email": "pmitropoulos@getmap.gr"}
+        description="A service that profiles geospatial data using the BigDataVoyant library "
+                    "https://github.com/OpertusMundi/BigDataVoyant",
+        contact={"email": "kpsarakis94@gmail.com"}
     ),
-    externalDocs={"description": "GitHub", "url": "https://github.com/OpertusMundi/transform"},
+    externalDocs={"description": "GitHub", "url": "https://github.com/OpertusMundi/profile"},
     openapi_version="3.0.2",
     plugins=[FlaskPlugin()],
 )
@@ -43,8 +41,8 @@ spec = APISpec(
 # Initialize app
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping(
-    SECRET_KEY='dev',
-    DATABASE=path.join(app.instance_path, 'geoprofile.sqlite'),
+    SECRET_KEY=getenv('SECRET_KEY'),
+    DATABASE=getenv('DATABASE'),
 )
 
 
@@ -115,11 +113,68 @@ def enqueue(ticket: str, src_path: str, file_type: str) -> tuple:
 @app.route("/")
 def index():
     """The index route, gives info about the API endpoints."""
+    mainLogger.info('Generating OpenAPI document...')
     return make_response(spec.to_dict(), 200)
 
 
 @app.route("/profile/file/netcdf", methods=["POST"])
 def profile_file_netcdf():
+    """Profile a NetCDF file that is provided with the request
+        ---
+        post:
+          summary: Profile a NetCDF file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
 
@@ -135,11 +190,68 @@ def profile_file_netcdf():
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="netcdf")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/profile/file/raster", methods=["POST"])
 def profile_file_raster():
+    """Profile a raster file that is provided with the request
+        ---
+        post:
+          summary: Profile a raster file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
 
@@ -155,11 +267,68 @@ def profile_file_raster():
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="raster")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/profile/file/vector", methods=["POST"])
 def profile_file_vector():
+    """Profile a vector file that is provided with the request
+        ---
+        post:
+          summary: Profile a vector file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
 
@@ -176,11 +345,68 @@ def profile_file_vector():
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="vector")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/profile/path/netcdf", methods=["POST"])
 def profile_path_netcdf():
+    """Profile a NetCDF file that its path provided with the request
+        ---
+        post:
+          summary: Profile a NetCDF file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
 
@@ -195,11 +421,68 @@ def profile_path_netcdf():
     else:
         ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="netcdf")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/profile/path/raster", methods=["POST"])
 def profile_path_raster():
+    """Profile a raster that its path provided with the request
+        ---
+        post:
+          summary: Profile a raster file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
 
@@ -214,11 +497,68 @@ def profile_path_raster():
     else:
         ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="raster")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/profile/path/vector", methods=["POST"])
 def profile_path_vector():
+    """Profile a vector that its path provided with the request
+        ---
+        post:
+          summary: Profile a vector file that is provided with the request
+          tags:
+            - Profile
+          requestBody:
+            required: true
+            content:
+              multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                  required:
+                    - resource
+          responses:
+            200:
+              description: Profiling completed and returned.
+              content:
+                application/json:
+                  schema:
+                    type: object
+            202:
+              description: Accepted for processing, but transform has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
 
@@ -234,7 +574,8 @@ def profile_path_vector():
     else:
         ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="vector")
-        return jsonify({"ticket": ticket})
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
 
 
 @app.route("/status/<ticket>")
