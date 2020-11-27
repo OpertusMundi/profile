@@ -1,0 +1,41 @@
+version: '3.6'
+
+services:
+
+  profile:
+    image: "opertusmundi/profile:${VERSION}"
+    build:
+      dockerfile: development.dockerfile
+      context: .
+      args:
+        VERSION: "${VERSION}"
+
+    volumes:
+    - type: 'bind'
+      source: './logs'
+      target: '/var/local/geoprofile/logs'
+    - type: 'bind'
+      source: './data/secret_key'
+      target: '/var/local/geoprofile/secret_key'
+      read_only: true
+    - type: 'bind'
+      source: './data/geoprofile.sqlite'
+      target: '/var/local/geoprofile/geoprofile.sqlite'
+    - type: 'bind'
+      source: './output'
+      target: '/var/local/geoprofile/output'
+
+    networks:
+    - 'opertusmundi_network'
+
+    ports:
+    - '5000:5000'
+
+    environment:
+      OUTPUT_DIR: '/var/local/geoprofile/output'
+      FLASK_ENV: "${FLASK_ENV}"
+      FLASK_DEBUG: "${FLASK_DEBUG}"
+
+networks:
+  opertusmundi_network:
+    external: true
