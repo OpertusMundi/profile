@@ -1,9 +1,0 @@
-version: "3"
-services:
-  profile-service:
-    build:
-      dockerfile: development.dockerfile
-      context: .
-    image: profile-dev:latest
-    ports:
-      - 5000:5000
