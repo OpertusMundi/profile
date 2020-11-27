@@ -32,6 +32,6 @@ def getLoggers():
         assert isinstance(execution_start, date)
         success = bool(success)
         execution_start = execution_start.strftime("%Y-%m-%d %H:%M:%S")
-        accountLog.info("ticket=%s, success=%s, execution_start=%s, execution_time=%ss, comment=%s, filesize=%s",
-                        ticket, success, execution_start, execution_time, comment, filesize)
+        accountLog.info(f"ticket={ticket}, success={success}, execution_start={execution_start}, "
+                        f"execution_time={execution_time}, comment={comment} filesize={filesize}")
     return mainLog, accountLogger
