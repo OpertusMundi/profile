@@ -360,7 +360,7 @@ def profile_path_netcdf():
           requestBody:
             required: true
             content:
-              multipart/form-data:
+              application/x-www-form-urlencoded:
                 schema:
                   type: object
                   properties:
@@ -436,7 +436,7 @@ def profile_path_raster():
           requestBody:
             required: true
             content:
-              multipart/form-data:
+              application/x-www-form-urlencoded:
                 schema:
                   type: object
                   properties:
@@ -512,7 +512,7 @@ def profile_path_vector():
           requestBody:
             required: true
             content:
-              multipart/form-data:
+              application/x-www-form-urlencoded:
                 schema:
                   type: object
                   properties:
