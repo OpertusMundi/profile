@@ -1,35 +1,38 @@
 FROM osgeo/gdal:ubuntu-full-3.1.0 as build-stage-1
 
-RUN apt-get update && apt-get install -y gcc make g++ git python3-pip git
-RUN pip3 install --upgrade pip
-RUN pip3 install --user --no-warn-script-location git+https://github.com/OpertusMundi/geovaex.git
-RUN pip3 install --user --no-warn-script-location git+https://github.com/OpertusMundi/BigDataVoyant.git
+RUN apt-get update \
+    && apt-get install -y gcc make g++ git python3-pip \
+    && pip3 install --upgrade pip \
+    && pip3 install --prefix=/usr/local git+https://github.com/OpertusMundi/geovaex.git \
+    git+https://github.com/OpertusMundi/BigDataVoyant.git
 
 FROM osgeo/gdal:ubuntu-full-3.1.0
+ARG VERSION
 
-LABEL language="python"
-LABEL framework="flask"
-LABEL usage="profile microservice for rasters and vectors"
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends sqlite python3-pip
 
-RUN apt-get update && apt-get install -y --no-install-recommends sqlite python3-pip gunicorn
+ENV VERSION="${VERSION}"
+ENV PYTHON_VERSION="3.8"
+ENV PYTHONPATH="/usr/local/lib/python${PYTHON_VERSION}/site-packages"
 
-COPY --from=build-stage-1 /root/.local /root/.local
+COPY --from=build-stage-1 /usr/local/ /usr/local/
 
-RUN mkdir /usr/local/geoprofile/
-COPY setup.py requirements.txt requirements-testing.txt /usr/local/geoprofile/
-COPY geoprofile /usr/local/geoprofile/geoprofile
+RUN pip3 install --upgrade pip
+COPY requirements.txt requirements-testing.txt ./
+RUN pip3 install --prefix=/usr/local -r requirements.txt -r requirements-testing.txt
 
-WORKDIR /usr/local/geoprofile
+# Get permission for vaex's private files so that the Setup/Teardown does not fail due to insufficient permissions
+RUN mkdir -p /.vaex/data \
+    && chmod o+r /.vaex/data \
+    && touch /.vaex/main.yml \
+    && chmod o+r /.vaex/main.yml \
+    && touch /.vaex/webclient.yml \
+    && chmod o+r /.vaex/webclient.yml \
+    && touch /.vaex/webserver.yml \
+    && chmod o+r /.vaex/webserver.yml \
+    && touch /.vaex/cluster.yml \
+    && chmod o+r /.vaex/cluster.yml
 
-RUN pip3 install --no-cache-dir --upgrade pip
-
-RUN pip3 install --no-cache-dir --user --no-warn-script-location -r requirements.txt -r requirements-testing.txt
-
-RUN python setup.py install --user
-
-COPY wsgi.py docker-command-dev.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/wsgi.py /usr/local/bin/docker-command-dev.sh
-
-ENV FLASK_ENV="production" FLASK_DEBUG="false"
-ENV OUTPUT_DIR="/var/local/geoprofile/output/"
-ENV TLS_CERTIFICATE="" TLS_KEY=""
+ENV FLASK_APP="profile" FLASK_ENV="testing" FLASK_DEBUG="false"
+ENV OUTPUT_DIR="./output" SECRET_KEY_FILE="./secret_key"

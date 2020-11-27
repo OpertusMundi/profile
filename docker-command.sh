@@ -27,8 +27,8 @@ if [ ! -f "${LOGGING_FILE_CONFIG}" ]; then
     exit 1
 fi
 
-export FLASK_APP="transform"
-export DATABASE="./transform.sqlite"
+export FLASK_APP="geoprofile"
+export DATABASE="./geoprofile.sqlite"
 export SECRET_KEY="$(cat "${SECRET_KEY_FILE}")"
 
 # Initialize database
@@ -52,5 +52,5 @@ fi
 
 exec gunicorn --log-config ${LOGGING_FILE_CONFIG} --access-logfile - \
   --workers ${num_workers} \
-  --bind "0.0.0.0:${server_port}" "${gunicorn_ssl_options}" \
+  --bind "0.0.0.0:${server_port}" ${gunicorn_ssl_options} \
   geoprofile.app:app
