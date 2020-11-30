@@ -1,3 +1,5 @@
+# vim: set syntax=yaml:
+
 version: '3.6'
 
 services:

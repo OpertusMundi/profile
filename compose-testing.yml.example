@@ -1,3 +1,5 @@
+# vim: set syntax=yaml:
+
 version: '3.6'
 
 services:
@@ -5,7 +7,7 @@ services:
   # note: this is not actually a service, we intend to run it only `docker-compose run`
   nosetests:
 
-    image: "local/opertusmundi-profile:${VERSION}-testing"
+    image: "opertusmundi/profile:${VERSION}-testing"
     build:
       context: .
       dockerfile: testing.dockerfile
