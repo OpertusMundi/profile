@@ -1,25 +1,28 @@
 import os
 import urllib.request
-import time
 import tempfile
 
 from geoprofile.app import app
 
 # Setup/Teardown
 
-_tempdir = None
+_tempdir: str = ""
+
 
 def setup_module():
     print(f" == Setting up tests for {__name__}")
     app.config['TESTING'] = True
     
-    global _tempdir;
-    _tempdir = os.getenv('TEMPDIR');
+    global _tempdir
+    _tempdir = os.getenv('TEMPDIR')
     if _tempdir:
-        try: os.mkdir(_tempdir);
-        except FileExistsError: pass
+        try:
+            os.mkdir(_tempdir)
+        except FileExistsError:
+            pass
     else:
-        _tempdir = tempfile.gettempdir();
+        _tempdir = tempfile.gettempdir()
+
 
 def teardown_module():
     print(f" == Tearing down tests for {__name__}")
