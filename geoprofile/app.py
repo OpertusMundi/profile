@@ -98,7 +98,7 @@ def enqueue(ticket: str, src_path: str, file_type: str) -> tuple:
         result = {}
         if file_type == 'netcdf':
             ds = bdv.io.read_file(src_path, type='netcdf', lat_attr='lat')
-            result = ds.report(sample_bbox=[-20, -20, 20, 20], sample_filename='sample.nc')
+            result = ds.report()
         elif file_type == 'raster':
             ds = RasterData.from_file(src_path)
             result = ds.report()
@@ -187,7 +187,7 @@ def profile_file_netcdf():
     # Immediate results
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
-        report = ds.report(sample_bbox=[-20, -20, 20, 20], sample_filename='sample.nc')
+        report = ds.report()
         return jsonify(report)
     # Wait for results
     else:
