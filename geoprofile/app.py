@@ -417,7 +417,7 @@ def profile_path_netcdf():
     # Immediate results
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
-        report = ds.report(sample_bbox=[-20, -20, 20, 20], sample_filename='sample.nc')
+        report = ds.report()
         return jsonify(report)
     # Wait for results
     else:
