@@ -37,5 +37,9 @@ RUN mkdir -p /.vaex/data \
     && touch /.vaex/cluster.yml \
     && chmod o+r /.vaex/cluster.yml
 
-ENV FLASK_APP="profile" FLASK_ENV="testing" FLASK_DEBUG="false"
-ENV OUTPUT_DIR="./output" SECRET_KEY_FILE="./secret_key"
+ENV FLASK_APP="geoprofile" \
+    FLASK_ENV="testing" \
+    FLASK_DEBUG="false" \
+    INSTANCE_PATH="" \
+    OUTPUT_DIR="./output/" \
+    SECRET_KEY_FILE="./secret_key" 

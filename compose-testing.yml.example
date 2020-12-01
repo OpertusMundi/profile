@@ -22,7 +22,10 @@ services:
       target: '/work'
     
     environment:
-      TEMPDIR: './temp'
+      TEMPDIR: '/work/temp'
+      OUTPUT_DIR: '/work/output'
+      INSTANCE_PATH: '/work/data'
+      DATABASE: '/work/data/geoprofile-testing.sqlite'
     
     working_dir: /work
     user: "1000:1000"
