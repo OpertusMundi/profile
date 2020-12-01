@@ -2,9 +2,12 @@ FROM osgeo/gdal:ubuntu-full-3.1.0 as build-stage-1
 
 RUN apt-get update \
     && apt-get install -y gcc make g++ git python3-pip \
-    && pip3 install --upgrade pip \
-    && pip3 install --prefix=/usr/local git+https://github.com/OpertusMundi/geovaex.git \
-    git+https://github.com/OpertusMundi/BigDataVoyant.git
+    && pip3 install --upgrade pip
+
+RUN pip3 install --prefix=/usr/local \
+    git+https://github.com/OpertusMundi/geovaex.git@v0.0.1 \
+    git+https://github.com/OpertusMundi/BigDataVoyant.git@v0.0.1
+
 
 FROM osgeo/gdal:ubuntu-full-3.1.0
 ARG VERSION
