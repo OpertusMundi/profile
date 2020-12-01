@@ -68,6 +68,7 @@ def executor_callback(future):
         dbc.commit()
         accountLogger(ticket=ticket, success=success, execution_start=time, execution_time=execution_time,
                       comment=comment, filesize=filesize)
+        dbc.close()
 
 
 # Ensure the instance folder exists and initialize application, db and executor.
@@ -92,6 +93,7 @@ def enqueue(ticket: str, src_path: str, file_type: str) -> tuple:
     dbc = db.get_db()
     dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
     dbc.commit()
+    dbc.close()
     try:
         result = {}
         if file_type == 'netcdf':
