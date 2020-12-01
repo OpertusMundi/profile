@@ -19,6 +19,7 @@ steps:
   commands:
   - export image=opertusmundi/geoprofile:${DRONE_COMMIT}-testing
   - (t=10; while ! docker info -f '{{.ID}}' 2>/dev/null; do t=$((t - 1)); test $${t} -ne 0; sleep 1; done)
+  - mkdir temp && chown -v 1000:1000 temp
   - docker build . -f testing.dockerfile --build-arg VERSION=${DRONE_COMMIT} -t $${image}
   - docker run --rm -u 1000:1000 -v $PWD:/work -w /work -e TEMPDIR=./temp $${image} nosetests -v
 
