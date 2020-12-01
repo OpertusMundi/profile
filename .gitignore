@@ -10,6 +10,7 @@ certs/
 data/
 output/
 logs/
+temp/
 *.log
 .env
 docker-compose.yml

@@ -4,6 +4,7 @@ certs
 data
 output
 logs
+temp
 README.md
 .env
 docker-compose.yml*

@@ -1,16 +1,25 @@
 import os
 import urllib.request
 import time
+import tempfile
+
 from geoprofile.app import app
 
 # Setup/Teardown
 
+_tempdir = None
 
 def setup_module():
     print(f" == Setting up tests for {__name__}")
     app.config['TESTING'] = True
-    pass
-
+    
+    global _tempdir;
+    _tempdir = os.getenv('TEMPDIR');
+    if _tempdir:
+        try: os.mkdir(_tempdir);
+        except FileExistsError: pass
+    else:
+        _tempdir = tempfile.gettempdir();
 
 def teardown_module():
     print(f" == Tearing down tests for {__name__}")
@@ -29,7 +38,7 @@ def test_get_documentation_1():
 
 def test_profile_netcdf_file_input():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = 'data/sample_netcdf.nc'
+    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
     urllib.request.urlretrieve(url, tmp_file_path)
     data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc')}
     with app.test_client() as client:
@@ -59,7 +68,7 @@ def test_profile_netcdf_file_input():
 def test_profile_raster_file_input():
     url = 'http://even.rouault.free.fr' \
           '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = 'data/sample_512.tif'
+    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
     urllib.request.urlretrieve(url, tmp_file_path)
     data = {'resource': (open(tmp_file_path, 'rb'), 'sample_512.tif')}
     with app.test_client() as client:
@@ -87,7 +96,7 @@ def test_profile_raster_file_input():
 
 # def test_profile_vector_file_input():
 #     url = 'https://download.geofabrik.de/europe/great-britain/wales-latest-free.shp.zip'
-#     tmp_file_path = 'data/wales-latest-free.shp.zip'
+#     tmp_file_path = os.path.join(_tempdir, 'wales-latest-free.shp.zip')
 #     urllib.request.urlretrieve(url, tmp_file_path)
 #     data = {'resource': (open(tmp_file_path, 'rb'), 'wales-latest-free.shp.zip')}
 #     with app.test_client() as client:
@@ -104,7 +113,7 @@ def test_profile_raster_file_input():
 
 def test_profile_netcdf_path_input():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = 'data/sample_netcdf.nc'
+    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
     urllib.request.urlretrieve(url, tmp_file_path)
     data = {'resource': tmp_file_path}
     with app.test_client() as client:
@@ -134,7 +143,7 @@ def test_profile_netcdf_path_input():
 def test_profile_raster_path_input():
     url = 'http://even.rouault.free.fr' \
           '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = 'data/sample_512.tif'
+    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
     urllib.request.urlretrieve(url, tmp_file_path)
     data = {'resource': tmp_file_path}
     with app.test_client() as client:
@@ -157,4 +166,4 @@ def test_profile_raster_path_input():
         r2 = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
         assert set(r2.keys()) == expected_fields
-    os.remove(tmp_file_path)
+        os.remove(tmp_file_path)

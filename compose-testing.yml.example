@@ -21,6 +21,9 @@ services:
       source: .
       target: '/work'
     
+    environment:
+      TEMPDIR: './temp'
+    
     working_dir: /work
     user: "1000:1000"
     
