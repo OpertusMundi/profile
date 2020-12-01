@@ -1,5 +1,7 @@
 # Profile micro-service
 
+[![Build Status](https://ci.dev-1.opertusmundi.eu:9443/api/badges/OpertusMundi/profile/status.svg?ref=refs/heads/main)](https://ci.dev-1.opertusmundi.eu:9443/OpertusMundi/profile)
+
 ## Description
 
 The purpose of this package is to deploy a micro-service which profiles a spatial (vector or raster) file. 
@@ -16,13 +18,15 @@ Initialize sqlite database by running:
 ```
 flask init-db
 ```
+
 The following environment variables should be set:
-- **FLASK_ENV**: *development* or *production*.
-- **FLASK_APP**: *profile*
-- **OUTPUT_DIR**: The location (full path), which will be used to store the resulting files (for the case of *deferred* request, see below).
-- (optional) **TEMPDIR**: The location of storing temporary files. If not set, the system temporary path location will be used.
-- (optional) **CORS**: List or string of allowed origins. Default: \*.
-- (optional) **LOGGING_FILE_CONFIG**: Logging configuration file, otherwise the default logging configuration file will be used.
+- `FLASK_ENV`: `development` or `production`
+- `FLASK_APP`: `geoprofile` (will be automatically set if running as a container)
+- `OUTPUT_DIR`: The location (full path), which will be used to store the resulting files (for the case of *deferred* request, see below).
+- (optional) `TEMPDIR`: The location of storing temporary files. If not set, the system temporary path location will be used.
+- (optional) `CORS`: List or string of allowed origins. Default: \*.
+- (optional) `LOGGING_FILE_CONFIG`: Logging configuration file, otherwise the default logging configuration file will be used.
+- (optional) `LOGGING_ROOT_LEVEL`: The level of detail for the root logger; one of `DEBUG`, 'INFO', `WARNING`.
 
 A development server could be started with:
 ```
@@ -30,9 +34,10 @@ flask run
 ```
 
 ## Endpoints
-#### Documentation
+
+### Documentation
 * `/` Generates the OpenAPI documentation
-#### Profiling with file input
+### Profiling with file input
 * `/profile/file/netcdf` Profile a NetCDF file that is provided with the request
 * `/profile/file/raster` Profile a raster file that is provided with the request
 * `/profile/file/vector` Profile a vector file that is provided with the request
@@ -41,7 +46,7 @@ Required parameters (form-data):
 * `resource (Required)` The given file
 * `response (Optional, default=prompt)` (see below)
 
-#### Profiling with path input
+### Profiling with path input
 * `/profile/path/netcdf` Profile a NetCDF file that its path is provided with the request
 * `/profile/path/raster` Profile a raster file that its path is provided with the request
 * `/profile/path/vector` Profile a vector file that its path is provided with the request
@@ -50,7 +55,7 @@ Required parameters (x-www-form-urlencoded):
 * `resource (Required)` The file's path
 * `response (Optional, default=prompt)` (see below)
 
-#### Deferred processing support
+### Deferred processing support
 * `/status/<ticket>` Get the status of a specific ticket
 * `/resource/<ticket>` Get the resulted resource associated with a specific ticket
 
@@ -77,7 +82,7 @@ Build:
 
 Prepare the following files/directories:
 
-   * `./data/profile.sqlite`:  the SQLite database (an empty database, if running for first time)
+   * `./data/geoprofile.sqlite`:  the SQLite database (an empty database, if running for first time)
    * `./data/secret_key`: file needed for signing/encrypting session data
    * `./logs`: a directory to keep logs under
    * `./output`: a directory to be used as root of a hierarchy of output files
@@ -94,3 +99,4 @@ Copy `compose-testing.yml.example` to `compose-testing.yml` and adjust to your n
 Run nosetests (in an ephemeral container):
 
     docker-compose -f compose-testing.yml run --rm --user "$(id -u):$(id -g)" nosetests -v
+
