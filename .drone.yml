@@ -1,0 +1,36 @@
+---
+
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: nosetests
+  image: docker:19.03-dind
+  when:
+    event:
+    - push
+    - tag
+  volumes:
+  - name: docker_socket
+    path: /var/run
+  environment:
+    DOCKER_HOST: unix:///var/run/docker.sock
+  commands:
+  - export image=opertusmundi/geoprofile:${DRONE_COMMIT}-testing
+  - (t=10; while ! docker info -f '{{.ID}}' 2>/dev/null; do t=$((t - 1)); test $${t} -ne 0; sleep 1; done)
+  - docker build . -f testing.dockerfile --build-arg VERSION=${DRONE_COMMIT} -t $${image}
+  - docker run --rm -u 1000:1000 -v $PWD:/work -w /work $${image} nosetests -v
+
+services:
+- name: docker
+  image: docker:19.03-dind
+  privileged: true
+  volumes:
+  - name: docker_socket
+    path: /var/run
+
+volumes:
+- name: docker_socket
+  temp: {}
+

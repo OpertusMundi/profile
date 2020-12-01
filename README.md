@@ -1,5 +1,7 @@
 # Profile micro-service
 
+[![Build Status](https://ci.dev-1.opertusmundi.eu:9443/api/badges/OpertusMundi/profile/status.svg?ref=refs/heads/master)](https://ci.dev-1.opertusmundi.eu:9443/OpertusMundi/profile)
+
 ## Description
 
 The purpose of this package is to deploy a micro-service which profiles a spatial (vector or raster) file. 
