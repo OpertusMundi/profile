@@ -1,6 +1,6 @@
 # Profile micro-service
 
-[![Build Status](https://ci.dev-1.opertusmundi.eu:9443/api/badges/OpertusMundi/profile/status.svg?ref=refs/heads/master)](https://ci.dev-1.opertusmundi.eu:9443/OpertusMundi/profile)
+[![Build Status](https://ci.dev-1.opertusmundi.eu:9443/api/badges/OpertusMundi/profile/status.svg?ref=refs/heads/main)](https://ci.dev-1.opertusmundi.eu:9443/OpertusMundi/profile)
 
 ## Description
 
