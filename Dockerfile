@@ -46,7 +46,7 @@ RUN mkdir ./logs \
     && chown flask:flask ./logs
 COPY --chown=flask logging.conf .
 
-ENV FLASK_ENV="production" FLASK_DEBUG="false"
+ENV FLASK_ENV="production" FLASK_DEBUG="false" LOGGING_ROOT_LEVEL=""
 ENV OUTPUT_DIR="/var/local/geoprofile/output/" SECRET_KEY_FILE="/var/local/geoprofile/secret_key"
 ENV TLS_CERTIFICATE="" TLS_KEY=""
 

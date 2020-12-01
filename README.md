@@ -26,6 +26,7 @@ The following environment variables should be set:
 - (optional) `TEMPDIR`: The location of storing temporary files. If not set, the system temporary path location will be used.
 - (optional) `CORS`: List or string of allowed origins. Default: \*.
 - (optional) `LOGGING_FILE_CONFIG`: Logging configuration file, otherwise the default logging configuration file will be used.
+- (optional) `LOGGING_ROOT_LEVEL`: The level of detail for the root logger; one of `DEBUG`, 'INFO', `WARNING`.
 
 A development server could be started with:
 ```
