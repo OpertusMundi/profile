@@ -5,8 +5,8 @@ RUN apt-get update \
     && pip3 install --upgrade pip
 
 RUN pip3 install --prefix=/usr/local \
-    git+https://github.com/OpertusMundi/geovaex.git \
-    git+https://github.com/OpertusMundi/BigDataVoyant.git
+    git+https://github.com/OpertusMundi/geovaex.git@v0.0.1 \
+    git+https://github.com/OpertusMundi/BigDataVoyant.git@v1.0.0
 
 
 FROM osgeo/gdal:ubuntu-full-3.1.0
