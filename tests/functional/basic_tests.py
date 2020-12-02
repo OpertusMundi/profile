@@ -9,6 +9,7 @@ from geoprofile.app import app
 
 _tempdir: str = ""
 
+
 def setup_module():
     print(f" == Setting up tests for {__name__}")
     app.config['TESTING'] = True
@@ -30,8 +31,7 @@ def teardown_module():
 
 
 def _check_all_fields_are_present(expected, r, api_path):
-    '''Check that all expected fields are present in a JSON response object (only examines top-level fields)
-    '''
+    """Check that all expected fields are present in a JSON response object (only examines top-level fields)"""
     missing = expected.difference(r.keys())
     if missing:
         logging.error('%s: the response is expected to also have these fields: %s', api_path, missing)
@@ -41,12 +41,14 @@ def _check_all_fields_are_present(expected, r, api_path):
 # Tests
 #
 
+
 def test_get_documentation_1():
     with app.test_client() as client:
         res = client.get('/', query_string=dict(), headers=dict())
         assert res.status_code == 200
         r = res.get_json()
         assert not (r.get('openapi') is None)
+
 
 def test_profile_netcdf_file_input_prompt():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
@@ -63,10 +65,11 @@ def test_profile_netcdf_file_input_prompt():
         assert res.status_code in [200, 202]
         # Test if it returns the expected fields
         r = res.get_json()
-        expected_fields = {'mbr', 'metadata', 'variables_list', 'dimensions_size', 'temporal_extent', 'dimensions_list',
-                           'variables_properties', 'no_data_values', 'statistics', 'variables_size', 'sample',
-                           'dimensions_properties'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
+                           'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
+                           'variables_size'}
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_netcdf_file_input_deferred():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
@@ -81,7 +84,8 @@ def test_profile_netcdf_file_input_deferred():
         # Test if it returns the expected fields
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_raster_file_input_prompt():
     url = 'http://even.rouault.free.fr' \
@@ -101,7 +105,8 @@ def test_profile_raster_file_input_prompt():
         r = res.get_json()
         expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                            'number_of_bands', 'resolution', 'statistics'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_raster_file_input_deferred():
     url = 'http://even.rouault.free.fr' \
@@ -117,7 +122,7 @@ def test_profile_raster_file_input_deferred():
         # Test if it returns the expected fields
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
 
 # def test_profile_vector_file_input():
 #     url = 'https://download.geofabrik.de/europe/great-britain/wales-latest-free.shp.zip'
@@ -152,10 +157,11 @@ def test_profile_netcdf_path_input_prompt():
         assert res.status_code in [200, 202]
         # Test if it returns the expected fields
         r = res.get_json()
-        expected_fields = {'mbr', 'metadata', 'variables_list', 'dimensions_size', 'temporal_extent', 'dimensions_list',
-                           'variables_properties', 'no_data_values', 'statistics', 'variables_size', 'sample',
-                           'dimensions_properties'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
+                           'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
+                           'variables_size'}
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_netcdf_path_input_deferred():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
@@ -171,7 +177,8 @@ def test_profile_netcdf_path_input_deferred():
         # Test if it returns the expected fields
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_raster_path_input_prompt():
     url = 'http://even.rouault.free.fr' \
@@ -191,7 +198,8 @@ def test_profile_raster_path_input_prompt():
         r = res.get_json()
         expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                            'number_of_bands', 'resolution', 'statistics'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+
 
 def test_profile_raster_path_input_deferred():
     url = 'http://even.rouault.free.fr' \
@@ -208,5 +216,4 @@ def test_profile_raster_path_input_deferred():
         # Test if it returns the expected fields
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
-        _check_all_fields_are_present(expected_fields, r, path_to_test);
-
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
