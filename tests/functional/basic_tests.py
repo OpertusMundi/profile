@@ -39,7 +39,7 @@ def test_get_documentation_1():
         assert not (r.get('openapi') is None)
 
 
-def test_profile_netcdf_file_input():
+def test_profile_netcdf_file_input_prompt():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
     tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
     urllib.request.urlretrieve(url, tmp_file_path)
@@ -57,7 +57,14 @@ def test_profile_netcdf_file_input():
                            'variables_properties', 'no_data_values', 'statistics', 'variables_size', 'sample',
                            'dimensions_properties'}
         assert set(r.keys()) == expected_fields
-        data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc'), 'response': 'deferred'}
+
+
+def test_profile_netcdf_file_input_deferred():
+    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
+    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc')}
+    with app.test_client() as client:
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post('/profile/file/netcdf', data=data, content_type='multipart/form-data')
         assert res.status_code in [200, 202]
@@ -65,10 +72,9 @@ def test_profile_netcdf_file_input():
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
         assert set(r.keys()) == expected_fields
-    os.remove(tmp_file_path)
 
 
-def test_profile_raster_file_input():
+def test_profile_raster_file_input_prompt():
     url = 'http://even.rouault.free.fr' \
           '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
     tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
@@ -86,7 +92,15 @@ def test_profile_raster_file_input():
         expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                            'number_of_bands', 'resolution', 'statistics'}
         assert set(r.keys()) == expected_fields
-        data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc'), 'response': 'deferred'}
+
+
+def test_profile_raster_file_input_deferred():
+    url = 'http://even.rouault.free.fr' \
+          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
+    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_512.tif')}
+    with app.test_client() as client:
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post('/profile/file/raster', data=data, content_type='multipart/form-data')
         assert res.status_code in [200, 202]
@@ -94,7 +108,6 @@ def test_profile_raster_file_input():
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
         assert set(r.keys()) == expected_fields
-    os.remove(tmp_file_path)
 
 
 # def test_profile_vector_file_input():
@@ -114,7 +127,7 @@ def test_profile_raster_file_input():
 #     os.remove(tmp_file_path)
 
 
-def test_profile_netcdf_path_input():
+def test_profile_netcdf_path_input_prompt():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
     tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
     urllib.request.urlretrieve(url, tmp_file_path)
@@ -132,6 +145,14 @@ def test_profile_netcdf_path_input():
                            'variables_properties', 'no_data_values', 'statistics', 'variables_size', 'sample',
                            'dimensions_properties'}
         assert set(r.keys()) == expected_fields
+
+
+def test_profile_netcdf_path_input_deferred():
+    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
+    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': tmp_file_path}
+    with app.test_client() as client:
         data['response'] = 'deferred'
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post('/profile/path/netcdf', data=data, content_type='application/x-www-form-urlencoded')
@@ -140,10 +161,9 @@ def test_profile_netcdf_path_input():
         r = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
         assert set(r.keys()) == expected_fields
-    os.remove(tmp_file_path)
 
 
-def test_profile_raster_path_input():
+def test_profile_raster_path_input_prompt():
     url = 'http://even.rouault.free.fr' \
           '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
     tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
@@ -161,6 +181,15 @@ def test_profile_raster_path_input():
         expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                            'number_of_bands', 'resolution', 'statistics'}
         assert set(r1.keys()) == expected_fields
+
+
+def test_profile_raster_path_input_deferred():
+    url = 'http://even.rouault.free.fr' \
+          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
+    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': tmp_file_path}
+    with app.test_client() as client:
         data['response'] = 'deferred'
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post('/profile/path/raster', data=data, content_type='application/x-www-form-urlencoded')
@@ -169,4 +198,3 @@ def test_profile_raster_path_input():
         r2 = res.get_json()
         expected_fields = {'endpoint', 'status', 'ticket'}
         assert set(r2.keys()) == expected_fields
-        os.remove(tmp_file_path)
