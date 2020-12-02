@@ -40,6 +40,8 @@ RUN mkdir -p /.vaex/data \
 ENV FLASK_APP="geoprofile" \
     FLASK_ENV="testing" \
     FLASK_DEBUG="false" \
-    INSTANCE_PATH="" \
-    OUTPUT_DIR="./output/" \
-    SECRET_KEY_FILE="./secret_key" 
+    OUTPUT_DIR="./output"
+
+COPY run-nosetests.sh /
+RUN chmod a+x /run-nosetests.sh
+ENTRYPOINT ["/run-nosetests.sh"]

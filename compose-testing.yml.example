@@ -14,13 +14,12 @@ services:
       args:
         VERSION: "${VERSION}"
     
-    entrypoint: ['nosetests']
-    command: ['--verbosity=2']
+    command: ['-v']
     volumes:
     - type: 'bind'
       source: .
       target: '/work'
-    
+
     environment:
       TEMPDIR: '/work/temp'
       OUTPUT_DIR: '/work/output'

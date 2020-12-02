@@ -29,7 +29,7 @@ steps:
     INSTANCE_PATH=/work/data
     DATABASE=/work/data/geoprofile-testing.sqlite
     ) | tee $${env_file}
-  - docker run --rm -u 1000:1000 -v $PWD:/work -w /work --env-file $${env_file} $${image} nosetests -v
+  - docker run --rm -u 1000:1000 -v $PWD:/work -w /work --env-file $${env_file} $${image}
 
 services:
 - name: docker
