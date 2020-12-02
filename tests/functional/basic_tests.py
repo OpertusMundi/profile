@@ -34,7 +34,8 @@ def _check_all_fields_are_present(expected, r, api_path):
     """Check that all expected fields are present in a JSON response object (only examines top-level fields)"""
     missing = expected.difference(r.keys())
     if missing:
-        logging.error('%s: the response is expected to also have these fields: %s', api_path, missing)
+        logging.error(f'{api_path}: the response contained the fields {list(r.keys())} '
+                      f' but it was missing the following fields: {missing}')
         assert False, 'The response is missing some fields'
 
 #
@@ -78,6 +79,7 @@ def test_profile_netcdf_file_input_deferred():
     data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc')}
     path_to_test = '/profile/file/netcdf'
     with app.test_client() as client:
+        data['response'] = 'deferred'
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post(path_to_test, data=data, content_type='multipart/form-data')
         assert res.status_code in [200, 202]
@@ -116,6 +118,7 @@ def test_profile_raster_file_input_deferred():
     data = {'resource': (open(tmp_file_path, 'rb'), 'sample_512.tif')}
     path_to_test = '/profile/file/raster'
     with app.test_client() as client:
+        data['response'] = 'deferred'
         # Test if it succeeds when a file is submitted with deferred processing
         res = client.post(path_to_test, data=data, content_type='multipart/form-data')
         assert res.status_code in [200, 202]
