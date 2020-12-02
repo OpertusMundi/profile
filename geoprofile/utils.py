@@ -2,7 +2,7 @@ import tarfile
 import zipfile
 import os
 from hashlib import md5
-from tempfile import gettempdir
+from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
 from flask import abort
@@ -77,3 +77,13 @@ def save_to_temp(form: FlaskForm, tmp_dir: str, ticket: str) -> str:
     src_file = path.join(src_path, filename)
     form.resource.data.save(src_file)
     return src_file
+
+
+def get_temp_dir():
+    """Return the temporary directory"""
+    return getenv('TEMPDIR') or gettempdir()
+
+
+def check_directory_writable(d):
+    fd, file_name = mkstemp(None, None, d)
+    os.unlink(file_name)

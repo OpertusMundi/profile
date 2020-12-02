@@ -153,3 +153,14 @@ def test_profile_raster_path_input_deferred():
     path_to_test = '/profile/path/raster'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+
+
+def test_get_health_check():
+    with app.test_client() as client:
+        res = client.get('/_health', query_string=dict(), headers=dict())
+        assert res.status_code == 200
+        r = res.get_json()
+        if 'reason' in r:
+            logging.error('The service is unhealthy: %(reason)s\n%(detail)s', r)
+        logging.debug("From /_health: %s" % r)
+        assert r['status'] == 'OK'

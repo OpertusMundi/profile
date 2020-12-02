@@ -15,8 +15,8 @@ from bigdatavoyant import RasterData
 from . import db
 from .forms import ProfileFileForm, ProfilePathForm
 from .logging import getLoggers
-from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, uncompress_file
-
+from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, uncompress_file, \
+    check_directory_writable, get_temp_dir
 
 if getenv('OUTPUT_DIR') is None:
     raise Exception('Environment variable OUTPUT_DIR is not set.')
@@ -117,6 +117,58 @@ def index():
     """The index route, gives info about the API endpoints."""
     mainLogger.info('Generating OpenAPI document...')
     return make_response(spec.to_dict(), 200)
+
+
+@app.route("/_health")
+def health_check():
+    """Perform basic health checks
+    ---
+    get:
+      tags:
+      - Health
+      summary: Get health status
+      description: 'Get health status'
+      operationId: 'getHealth'
+      responses:
+        default:
+          description: An object with status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: A status of 'OK' or 'FAILED'
+                  reason:
+                    type: string
+                    description: the reason of failure (if failed)
+                  detail:
+                    type: string
+                    description: more details on this failure (if failed)
+              examples:
+                example-1:
+                  value: |-
+                    {"status": "OK"}
+    """
+    mainLogger.info('Performing health checks...')
+    # Check that temp directory is writable
+    try:
+        check_directory_writable(get_temp_dir())
+    except Exception as exc:
+        return make_response({'status': 'FAILED', 'reason': 'temp directory not writable', 'detail': str(exc)},
+                             200)
+    # Check that we can connect to our PostGIS backend
+    try:
+        dbc = db.get_db()
+        dbc.execute('SELECT 1').fetchone()
+    except Exception as exc:
+        return make_response({'status': 'FAILED', 'reason': 'cannot connect to SQLite backend', 'detail': str(exc)},
+                             200)
+    # Check that we can connect to our Geoserver backend
+    # Todo ...
+    return make_response({'status': 'OK'},
+                         200)
 
 
 @app.route("/profile/file/netcdf", methods=["POST"])
