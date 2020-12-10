@@ -48,6 +48,8 @@ fi
 
 num_workers="4"
 server_port="5000"
+timeout="1200"
+num_threads="1"
 gunicorn_ssl_options=
 if [ -n "${TLS_CERTIFICATE}" ] && [ -n "${TLS_KEY}" ]; then
     gunicorn_ssl_options="--keyfile ${TLS_KEY} --certfile ${TLS_CERTIFICATE}"
@@ -56,5 +58,7 @@ fi
 
 exec gunicorn --log-config ${LOGGING_FILE_CONFIG} --access-logfile - \
   --workers ${num_workers} \
+  -t ${timeout} \
+  --threads ${num_threads} \
   --bind "0.0.0.0:${server_port}" ${gunicorn_ssl_options} \
   geoprofile.app:app
