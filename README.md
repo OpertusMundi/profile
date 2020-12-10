@@ -35,6 +35,8 @@ flask run
 
 ## Endpoints
 
+You can browse the full [OpenAPI documentation](https://opertusmundi.github.io/profile/)
+
 ### Documentation
 * `/` Generates the OpenAPI documentation
 ### Profiling with file input
@@ -74,7 +76,11 @@ index of the service, i.e. for development environment http://localhost:5000.
 
 Copy `.env.example` to `.env` and configure if needed (e.g `FLASK_ENV` variable).
 
-Copy `compose.yml.example` to `compose.yml` (or `docker-compose.yml`) and adjust to your needs (e.g. specify volume source locations etc.).
+Copy `compose.yml.example` to `compose.yml` (or `docker-compose.yml`) and adjust to your needs (e.g. specify volume source locations etc.). You will at least need to configure the network (inside `compose.yml`) to attach to. 
+
+For example, you can create a private network named `opertusmundi_network`:
+
+    docker network create --attachable opertusmundi_network
 
 Build:
 

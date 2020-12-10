@@ -37,6 +37,7 @@ services:
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
       LOGGING_ROOT_LEVEL: 'INFO'
+      CORS: '*'
 
 networks:
   opertusmundi_network:
