@@ -110,6 +110,28 @@ def test_profile_raster_file_input_deferred():
     _check_endpoint(path_to_test, data, expected_fields)
 
 
+def test_profile_vector_file_input_prompt():
+    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
+    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': (open(tmp_file_path, 'rb'), 'nyc_roads.zip')}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields)
+
+
+def test_profile_vector_file_input_deferred():
+    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
+    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': (open(tmp_file_path, 'rb'), 'nyc_roads.zip'), 'response': 'deferred'}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'endpoint', 'status', 'ticket'}
+    _check_endpoint(path_to_test, data, expected_fields)
+
+
 def test_profile_netcdf_path_input_prompt():
     url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
     tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
@@ -151,6 +173,28 @@ def test_profile_raster_path_input_deferred():
     urllib.request.urlretrieve(url, tmp_file_path)
     data = {'resource': tmp_file_path, 'response': 'deferred'}
     path_to_test = '/profile/path/raster'
+    expected_fields = {'endpoint', 'status', 'ticket'}
+    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+
+
+def test_profile_vector_path_input_prompt():
+    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
+    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource':  tmp_file_path}
+    path_to_test = '/profile/path/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+
+
+def test_profile_vector_path_input_deferred():
+    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
+    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
+    urllib.request.urlretrieve(url, tmp_file_path)
+    data = {'resource': tmp_file_path, 'response': 'deferred'}
+    path_to_test = '/profile/path/vector'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
