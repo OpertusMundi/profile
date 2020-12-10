@@ -1,7 +1,6 @@
 import tarfile
 import zipfile
 import os
-from hashlib import md5
 from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
@@ -17,12 +16,13 @@ def validate_form(form: FlaskForm, logger) -> None:
 
 
 def create_ticket() -> str:
-    ticket = md5(str(uuid4()).encode()).hexdigest()
+    ticket = str(uuid4())
     return ticket
 
 
 def get_subdirectories(folder_path: str) -> list:
     subdirectories = []
+    entry: os.DirEntry
     for entry in os.scandir(folder_path):
         if not entry.name.startswith('.') and entry.is_dir():
             subdirectories.append(entry.name)
