@@ -30,8 +30,8 @@ def teardown_module():
 
 dirname = path.dirname(__file__)
 netcdf_sample_path = path.join(dirname, '..', 'test_data/sresa1b_ncar_ccsm3-example.nc')
-raster_sample_path = path.join(dirname, '..', 'test_data/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_'
-                                         'cloudoptimized_512.tif')
+raster_sample_path = path.join(dirname, '..', 'test_data/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_'
+                                              'TCI_cloudoptimized_512.tif')
 vector_sample_path = path.join(dirname, '..', 'test_data/nyc_roads.zip')
 
 
@@ -148,20 +148,20 @@ def test_profile_raster_path_input_deferred():
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
-def test_profile_vector_path_input_prompt():
-    data = {'resource':  vector_sample_path}
-    path_to_test = '/profile/path/vector'
-    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
-                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
-                       'recurring', 'statistics', 'thumbnail'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
-
-
-def test_profile_vector_path_input_deferred():
-    data = {'resource': vector_sample_path, 'response': 'deferred'}
-    path_to_test = '/profile/path/vector'
-    expected_fields = {'endpoint', 'status', 'ticket'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+# def test_profile_vector_path_input_prompt():
+#     data = {'resource':  vector_sample_path}
+#     path_to_test = '/profile/path/vector'
+#     expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+#                        'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+#                        'recurring', 'statistics', 'thumbnail'}
+#     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+#
+#
+# def test_profile_vector_path_input_deferred():
+#     data = {'resource': vector_sample_path, 'response': 'deferred'}
+#     path_to_test = '/profile/path/vector'
+#     expected_fields = {'endpoint', 'status', 'ticket'}
+#     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
 def test_get_health_check():
