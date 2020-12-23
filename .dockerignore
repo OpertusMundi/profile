@@ -10,4 +10,3 @@ README.md
 docker-compose.yml*
 compose-dev.yml
 compose-testing.yml
-tests/data

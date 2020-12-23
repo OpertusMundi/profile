@@ -1,5 +1,4 @@
-import os
-import urllib.request
+from os import path, getenv, mkdir
 import logging
 import tempfile
 
@@ -15,10 +14,10 @@ def setup_module():
     app.config['TESTING'] = True
     
     global _tempdir
-    _tempdir = os.getenv('TEMPDIR')
+    _tempdir = getenv('TEMPDIR')
     if _tempdir:
         try:
-            os.mkdir(_tempdir)
+            mkdir(_tempdir)
         except FileExistsError:
             pass
     else:
@@ -27,7 +26,13 @@ def setup_module():
 
 def teardown_module():
     print(f" == Tearing down tests for {__name__}")
-    pass
+
+
+dirname = path.dirname(__file__)
+netcdf_sample_path = path.join(dirname, '..', 'test_data/sresa1b_ncar_ccsm3-example.nc')
+raster_sample_path = path.join(dirname, '..', 'test_data/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_'
+                                         'cloudoptimized_512.tif')
+vector_sample_path = path.join(dirname, '..', 'test_data/nyc_roads.zip')
 
 
 def _check_all_fields_are_present(expected: set, r: dict, api_path: str):
@@ -66,10 +71,7 @@ def test_get_documentation_1():
 
 
 def test_profile_netcdf_file_input_prompt():
-    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc')}
+    data = {'resource': (open(netcdf_sample_path, 'rb'), 'sample_netcdf.nc')}
     path_to_test = '/profile/file/netcdf'
     expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
                        'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
@@ -78,21 +80,14 @@ def test_profile_netcdf_file_input_prompt():
 
 
 def test_profile_netcdf_file_input_deferred():
-    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_netcdf.nc'), 'response': 'deferred'}
+    data = {'resource': (open(netcdf_sample_path, 'rb'), 'sample_netcdf.nc'), 'response': 'deferred'}
     path_to_test = '/profile/file/netcdf'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
 def test_profile_raster_file_input_prompt():
-    url = 'http://even.rouault.free.fr' \
-          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_512.tif')}
+    data = {'resource': (open(raster_sample_path, 'rb'), 'sample_512.tif')}
     path_to_test = '/profile/file/raster'
     expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                        'number_of_bands', 'resolution', 'statistics'}
@@ -100,21 +95,14 @@ def test_profile_raster_file_input_prompt():
 
 
 def test_profile_raster_file_input_deferred():
-    url = 'http://even.rouault.free.fr' \
-          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'sample_512.tif'), 'response': 'deferred'}
+    data = {'resource': (open(raster_sample_path, 'rb'), 'sample_512.tif'), 'response': 'deferred'}
     path_to_test = '/profile/file/raster'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
 def test_profile_vector_file_input_prompt():
-    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
-    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'nyc_roads.zip')}
+    data = {'resource': (open(vector_sample_path, 'rb'), 'nyc_roads.zip')}
     path_to_test = '/profile/file/vector'
     expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
                        'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
@@ -123,20 +111,14 @@ def test_profile_vector_file_input_prompt():
 
 
 def test_profile_vector_file_input_deferred():
-    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
-    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': (open(tmp_file_path, 'rb'), 'nyc_roads.zip'), 'response': 'deferred'}
+    data = {'resource': (open(vector_sample_path, 'rb'), 'nyc_roads.zip'), 'response': 'deferred'}
     path_to_test = '/profile/file/vector'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
 def test_profile_netcdf_path_input_prompt():
-    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': tmp_file_path}
+    data = {'resource': netcdf_sample_path}
     path_to_test = '/profile/path/netcdf'
     expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
                        'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
@@ -145,21 +127,14 @@ def test_profile_netcdf_path_input_prompt():
 
 
 def test_profile_netcdf_path_input_deferred():
-    url = 'https://www.unidata.ucar.edu/software/netcdf/examples/test_echam_spectral-deflated.nc'
-    tmp_file_path = os.path.join(_tempdir, 'sample_netcdf.nc')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': tmp_file_path, 'response': 'deferred'}
+    data = {'resource': netcdf_sample_path, 'response': 'deferred'}
     path_to_test = '/profile/path/netcdf'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
 def test_profile_raster_path_input_prompt():
-    url = 'http://even.rouault.free.fr' \
-          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': tmp_file_path}
+    data = {'resource': raster_sample_path}
     path_to_test = '/profile/path/raster'
     expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
                        'number_of_bands', 'resolution', 'statistics'}
@@ -167,21 +142,14 @@ def test_profile_raster_path_input_prompt():
 
 
 def test_profile_raster_path_input_deferred():
-    url = 'http://even.rouault.free.fr' \
-          '/gtiff_test/S2A_MSIL1C_20170102T111442_N0204_R137_T30TXT_20170102T111441_TCI_cloudoptimized_512.tif'
-    tmp_file_path = os.path.join(_tempdir, 'sample_512.tif')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': tmp_file_path, 'response': 'deferred'}
+    data = {'resource': raster_sample_path, 'response': 'deferred'}
     path_to_test = '/profile/path/raster'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
 def test_profile_vector_path_input_prompt():
-    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
-    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource':  tmp_file_path}
+    data = {'resource':  vector_sample_path}
     path_to_test = '/profile/path/vector'
     expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
                        'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
@@ -190,10 +158,7 @@ def test_profile_vector_path_input_prompt():
 
 
 def test_profile_vector_path_input_deferred():
-    url = 'https://docs.geoserver.org/stable/en/user/_downloads/30e405b790e068c43354367cb08e71bc/nyc_roads.zip'
-    tmp_file_path = os.path.join(_tempdir, 'nyc_roads.zip')
-    urllib.request.urlretrieve(url, tmp_file_path)
-    data = {'resource': tmp_file_path, 'response': 'deferred'}
+    data = {'resource': vector_sample_path, 'response': 'deferred'}
     path_to_test = '/profile/path/vector'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
