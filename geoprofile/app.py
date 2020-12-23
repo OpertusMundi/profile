@@ -6,7 +6,6 @@ from apispec_webframeworks.flask import FlaskPlugin
 from os import path, getenv, stat
 from flask_cors import CORS
 from flask_executor import Executor
-from flask import jsonify
 from flask import make_response, send_file
 
 import bigdatavoyant as bdv
@@ -16,7 +15,7 @@ from . import db
 from .forms import ProfileFileForm, ProfilePathForm
 from .logging import getLoggers
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, uncompress_file, \
-    check_directory_writable, get_temp_dir
+    check_directory_writable, get_temp_dir, convert
 
 if getenv('OUTPUT_DIR') is None:
     raise Exception('Environment variable OUTPUT_DIR is not set.')
@@ -240,7 +239,11 @@ def profile_file_netcdf():
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
         report = ds.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="netcdf")
@@ -317,7 +320,11 @@ def profile_file_raster():
     if form.response.data == "prompt":
         ds = RasterData.from_file(src_file_path)
         report = ds.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="raster")
@@ -395,7 +402,11 @@ def profile_file_vector():
         src_file_path = uncompress_file(src_file_path)
         gdf = bdv.io.read_file(src_file_path)
         report = gdf.profiler.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="vector")
@@ -470,7 +481,11 @@ def profile_path_netcdf():
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
         report = ds.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -546,7 +561,11 @@ def profile_path_raster():
     if form.response.data == "prompt":
         ds = RasterData.from_file(src_file_path)
         report = ds.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -623,7 +642,11 @@ def profile_path_vector():
         src_file_path = uncompress_file(src_file_path)
         gdf = bdv.io.read_file(src_file_path)
         report = gdf.profiler.report()
-        return jsonify(report)
+        response = app.response_class(
+            response=json.dumps(report, default=convert),
+            mimetype='application/json'
+        )
+        return response
     # Wait for results
     else:
         ticket: str = create_ticket()

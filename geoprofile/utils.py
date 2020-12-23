@@ -1,6 +1,7 @@
 import tarfile
 import zipfile
 import os
+import numpy
 from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
@@ -87,3 +88,11 @@ def get_temp_dir():
 def check_directory_writable(d):
     fd, file_name = mkstemp(None, None, d)
     os.unlink(file_name)
+
+
+def convert(o):
+    if isinstance(o, numpy.int64) or isinstance(o, numpy.int32):
+        return int(o)
+    elif isinstance(o, numpy.float64) or isinstance(o, numpy.float32):
+        return float(o)
+    raise TypeError
