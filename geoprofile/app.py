@@ -15,7 +15,7 @@ from . import db
 from .forms import ProfileFileForm, ProfilePathForm
 from .logging import getLoggers
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, uncompress_file, \
-    check_directory_writable, get_temp_dir, convert
+    check_directory_writable, get_temp_dir
 
 if getenv('OUTPUT_DIR') is None:
     raise Exception('Environment variable OUTPUT_DIR is not set.')
@@ -238,12 +238,8 @@ def profile_file_netcdf():
     # Immediate results
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
-        report = ds.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = ds.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="netcdf")
@@ -319,12 +315,8 @@ def profile_file_raster():
     # Wait for results
     if form.response.data == "prompt":
         ds = RasterData.from_file(src_file_path)
-        report = ds.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = ds.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="raster")
@@ -401,12 +393,8 @@ def profile_file_vector():
     if form.response.data == "prompt":
         src_file_path = uncompress_file(src_file_path)
         gdf = bdv.io.read_file(src_file_path)
-        report = gdf.profiler.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = gdf.profiler.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="vector")
@@ -480,12 +468,8 @@ def profile_path_netcdf():
     # Immediate results
     if form.response.data == "prompt":
         ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
-        report = ds.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = ds.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -560,12 +544,8 @@ def profile_path_raster():
     # Wait for results
     if form.response.data == "prompt":
         ds = RasterData.from_file(src_file_path)
-        report = ds.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = ds.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -641,12 +621,8 @@ def profile_path_vector():
     if form.response.data == "prompt":
         src_file_path = uncompress_file(src_file_path)
         gdf = bdv.io.read_file(src_file_path)
-        report = gdf.profiler.report()
-        response = app.response_class(
-            response=json.dumps(report, default=convert),
-            mimetype='application/json'
-        )
-        return response
+        report = gdf.profiler.report().to_json()
+        return make_response(report, 200)
     # Wait for results
     else:
         ticket: str = create_ticket()
