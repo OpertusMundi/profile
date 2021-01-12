@@ -1,3 +1,4 @@
+import json
 from os import path, getenv, mkdir
 import logging
 import tempfile
@@ -54,7 +55,7 @@ def _check_endpoint(path_to_test: str, data: dict, expected_fields: set, content
         res = client.post(path_to_test, data=data, content_type=content_type)
         assert res.status_code in [200, 202]
         # Test if it returns the expected fields
-        r = res.get_json()
+        r = json.loads(res.get_data(as_text=True))
         _check_all_fields_are_present(expected_fields, r, path_to_test)
 
 #
