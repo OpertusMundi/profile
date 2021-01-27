@@ -8,6 +8,8 @@ from flask import abort
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
+import bigdatavoyant as bdv
+
 
 def validate_form(form: FlaskForm, logger) -> None:
     if not form.validate_on_submit():
@@ -87,3 +89,35 @@ def get_temp_dir():
 def check_directory_writable(d):
     fd, file_name = mkstemp(None, None, d)
     os.unlink(file_name)
+
+
+def get_resized_report(src_file_path: str, form: FlaskForm):
+    src_file_path = uncompress_file(src_file_path)
+    gdf = bdv.io.read_file(src_file_path)
+    ratio = None
+    width = 1920
+    height = None
+    if form.aspect_ratio.data:
+        ratio = form.aspect_ratio.data
+    if form.width.data:
+        width = form.width.data
+    if form.height.data:
+        height = form.height.data
+    report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
+                                 aspect_ratio=ratio, width=width, height=height).to_json()
+    return report
+
+
+def get_netcdf_ds(src_path: str, form: FlaskForm):
+    lat_attr = 'lat'
+    lon_attr = 'lon'
+    time_attr = 'time'
+    if form.lat.data:
+        lat_attr = form.lat.data
+    if form.lon.data:
+        lon_attr = form.lon.data
+    if form.time.data:
+        time_attr = form.time.data
+    ds = bdv.io.read_file(src_path, type='netcdf', lat_attr=lat_attr, lon_attr=lon_attr,
+                          time_attr=time_attr)
+    return ds
