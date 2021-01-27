@@ -339,23 +339,6 @@ def profile_file_raster():
                       enum: [prompt, deferred]
                       default: prompt
                       description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
-                    basemap_provider:
-                      type: string
-                      default: OpenStreetMap
-                      description: The basemap provider
-                    basemap_name:
-                      type: string
-                      default: Mapnik
-                      description: The name of the basemap
-                    aspect_ratio:
-                      type: float
-                      description: The aspect ratio of the static map to be generated
-                    width:
-                      type: integer
-                      description: The width (in pixels) of the static map to be generated
-                    height:
-                      type: integer
-                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
@@ -763,23 +746,6 @@ def profile_path_raster():
                       enum: [prompt, deferred]
                       default: prompt
                       description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
-                    basemap_provider:
-                      type: string
-                      default: OpenStreetMap
-                      description: The basemap provider
-                    basemap_name:
-                      type: string
-                      default: Mapnik
-                      description: The name of the basemap
-                    aspect_ratio:
-                      type: float
-                      description: The aspect ratio of the static map to be generated
-                    width:
-                      type: integer
-                      description: The width (in pixels) of the static map to be generated
-                    height:
-                      type: integer
-                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
