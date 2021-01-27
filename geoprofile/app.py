@@ -198,18 +198,81 @@ def profile_file_netcdf():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
+                    lat:
+                      type: string
+                      description: The column name with the latitude information
+                    lon:
+                      type: string
+                      description: The column name with the longitude information
+                    time:
+                      type: string
+                      description: The column name with the time information
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: The type of the asset (always *netCDF*).
+                        metadata:
+                          type: object
+                          description: File's metadata
+                        dimensionsSize:
+                          type: integer
+                          description: Number of dimensions.
+                        dimensionsList:
+                          type: object
+                          description: List of dimensions.
+                        dimensionsProperties:
+                          type: object
+                          description: The properties for each dimension.
+                        variablesSize:
+                          type: integer
+                          description: Number of variables.
+                        variablesList:
+                          type: object
+                          description: List of variables.
+                        variablesProperties:
+                          type: object
+                          description: The properties for each variable.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        temporalExtent:
+                          type: string
+                          description: A string representing the temporal extend of the dataset.
+                        noDataValues:
+                          type: object
+                          description: The no-data value for each the variables.
+                        statistics:
+                          type: object
+                          description: General statistics for each of the variables (*missing*, *min*, *max*, *mean*, *std*, *variance* and whether the data are *contiguous*).
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -275,18 +338,72 @@ def profile_file_raster():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: The type of the asset (always *raster*).
+                        info:
+                          type: object
+                          description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
+                        statistics:
+                          type: object
+                          description: A list with the statistics for each band of the raster file.
+                        histogram:
+                          type: object
+                          description: The default histogram of the raster file for each band.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        resolution:
+                          type: object
+                          description: The resolution for each dimension, and the unit of measurement.
+                        cog:
+                          type: boolean
+                          description: If raster is GeoTiff, whether it is Cloud-Optimized or not.
+                        numberOfBands:
+                          type: integer
+                          description: The number of bands in the raster.
+                        datatypes:
+                          type: object
+                          description: The data type for each band.
+                        noDataValue:
+                          type: object
+                          description: The no-data value for each band.
+                        crs:
+                          type: string
+                          description: The short name of the dataset's native Coordinate Reference System (CRS).
+                        colorInterpretation:
+                          type: object
+                          description: The Color Interpretation for each band.
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -352,18 +469,96 @@ def profile_file_vector():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: One of *tabular* or *vector*.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
+                        featureCount:
+                          type: integer
+                          description: The number of features in the dataset.
+                        count:
+                          type: object
+                          description: Count not null values for each attribute in the dataset.
+                        convexHull:
+                          type: string
+                          description: The Well-Known-Text representation of the Convex Hull for all geometries.
+                        convexHullStatic:
+                          type: string
+                          description: A PNG static map showing the convex hull, base64 encoded.
+                        thumbnail:
+                          type: string
+                          description: A PNG thumbnail of the dataset, base64 encoded.
+                        crs:
+                          type: string
+                          description: The short name of the dataset's native Coordinate Reference System (CRS).
+                        attributes:
+                          type: object
+                          description: A list with the attributes of the dataset.
+                        datatypes:
+                          type: object
+                          description: The datatypes for each of the dataset's attributes.
+                        distribution:
+                          type: object
+                          description: The distribution of the values for each attribute in the dataset.
+                        quantiles:
+                          type: object
+                          description: The 5, 25, 50, 75, 95 quantiles for each of the numeric attributes in the dataset.
+                        distinct:
+                          type: object
+                          description: The distinct values for each of the attributes in the dataset.
+                        recurring:
+                          type: object
+                          description: The most frequent values for each of the attributes in the dataset.
+                        heatmap:
+                          type: object
+                          description: A GeoJSON with a heatmap of the geometries.
+                        heatmapStatic:
+                          type: string
+                          description: A PNG static heatmap, base64 encoded.
+                        clusters:
+                          type: object
+                          description: A GeoJSON with clustered geometries.
+                        clustersStatic:
+                          type: string
+                          description: A PNG static map with the clustered geometries, base64 encoded.
+                        statistics:
+                          type: object
+                          description: Statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -428,18 +623,81 @@ def profile_path_netcdf():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
+                    lat:
+                      type: string
+                      description: The column name with the latitude information
+                    lon:
+                      type: string
+                      description: The column name with the longitude information
+                    time:
+                      type: string
+                      description: The column name with the time information
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: The type of the asset (always *netCDF*).
+                        metadata:
+                          type: object
+                          description: File's metadata
+                        dimensionsSize:
+                          type: integer
+                          description: Number of dimensions.
+                        dimensionsList:
+                          type: object
+                          description: List of dimensions.
+                        dimensionsProperties:
+                          type: object
+                          description: The properties for each dimension.
+                        variablesSize:
+                          type: integer
+                          description: Number of variables.
+                        variablesList:
+                          type: object
+                          description: List of variables.
+                        variablesProperties:
+                          type: object
+                          description: The properties for each variable.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        temporalExtent:
+                          type: string
+                          description: A string representing the temporal extend of the dataset.
+                        noDataValues:
+                          type: object
+                          description: The no-data value for each the variables.
+                        statistics:
+                          type: object
+                          description: General statistics for each of the variables (*missing*, *min*, *max*, *mean*, *std*, *variance* and whether the data are *contiguous*).
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -504,18 +762,72 @@ def profile_path_raster():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: The type of the asset (always *raster*).
+                        info:
+                          type: object
+                          description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
+                        statistics:
+                          type: object
+                          description: A list with the statistics for each band of the raster file.
+                        histogram:
+                          type: object
+                          description: The default histogram of the raster file for each band.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        resolution:
+                          type: object
+                          description: The resolution for each dimension, and the unit of measurement.
+                        cog:
+                          type: boolean
+                          description: If raster is GeoTiff, whether it is Cloud-Optimized or not.
+                        numberOfBands:
+                          type: integer
+                          description: The number of bands in the raster.
+                        datatypes:
+                          type: object
+                          description: The data type for each band.
+                        noDataValue:
+                          type: object
+                          description: The no-data value for each band.
+                        crs:
+                          type: string
+                          description: The short name of the dataset's native Coordinate Reference System (CRS).
+                        colorInterpretation:
+                          type: object
+                          description: The Color Interpretation for each band.
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -580,18 +892,96 @@ def profile_path_vector():
                       type: string
                       enum: [prompt, deferred]
                       default: prompt
-                      description: Determines whether the transform process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    basemap_provider:
+                      type: string
+                      default: OpenStreetMap
+                      description: The basemap provider
+                    basemap_name:
+                      type: string
+                      default: Mapnik
+                      description: The name of the basemap
+                    aspect_ratio:
+                      type: float
+                      description: The aspect ratio of the static map to be generated
+                    width:
+                      type: integer
+                      description: The width (in pixels) of the static map to be generated
+                    height:
+                      type: integer
+                      description: The height (in pixels) of the static map to be generated
                   required:
                     - resource
           responses:
             200:
               description: Profiling completed and returned.
               content:
-                application/json:
-                  schema:
-                    type: object
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        assetType:
+                          type: string
+                          description: One of *tabular* or *vector*.
+                        mbr:
+                          type: string
+                          description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
+                        featureCount:
+                          type: integer
+                          description: The number of features in the dataset.
+                        count:
+                          type: object
+                          description: Count not null values for each attribute in the dataset.
+                        convexHull:
+                          type: string
+                          description: The Well-Known-Text representation of the Convex Hull for all geometries.
+                        convexHullStatic:
+                          type: string
+                          description: A PNG static map showing the convex hull, base64 encoded.
+                        thumbnail:
+                          type: string
+                          description: A PNG thumbnail of the dataset, base64 encoded.
+                        crs:
+                          type: string
+                          description: The short name of the dataset's native Coordinate Reference System (CRS).
+                        attributes:
+                          type: object
+                          description: A list with the attributes of the dataset.
+                        datatypes:
+                          type: object
+                          description: The datatypes for each of the dataset's attributes.
+                        distribution:
+                          type: object
+                          description: The distribution of the values for each attribute in the dataset.
+                        quantiles:
+                          type: object
+                          description: The 5, 25, 50, 75, 95 quantiles for each of the numeric attributes in the dataset.
+                        distinct:
+                          type: object
+                          description: The distinct values for each of the attributes in the dataset.
+                        recurring:
+                          type: object
+                          description: The most frequent values for each of the attributes in the dataset.
+                        heatmap:
+                          type: object
+                          description: A GeoJSON with a heatmap of the geometries.
+                        heatmapStatic:
+                          type: string
+                          description: A PNG static heatmap, base64 encoded.
+                        clusters:
+                          type: object
+                          description: A GeoJSON with clustered geometries.
+                        clustersStatic:
+                          type: string
+                          description: A PNG static map with the clustered geometries, base64 encoded.
+                        statistics:
+                          type: object
+                          description: Statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
             202:
-              description: Accepted for processing, but transform has not been completed.
+              description: Accepted for processing, but profile has not been completed.
               content:
                 application/json:
                   schema:
@@ -637,7 +1027,7 @@ def status(ticket):
     """Get the status of a specific ticket.
     ---
     get:
-      summary: Get the status of a transform request.
+      summary: Get the status of a profile request.
       operationId: getStatus
       description: Returns the status of a request corresponding to a specific ticket.
       tags:
@@ -659,13 +1049,13 @@ def status(ticket):
                 properties:
                   completed:
                     type: boolean
-                    description: Whether transformation process has been completed or not.
+                    description: Whether profiling process has been completed or not.
                   success:
                     type: boolean
-                    description: Whether transformation process completed succesfully.
+                    description: Whether profiling process completed successfully.
                   comment:
                     type: string
-                    description: If transformation has failed, a short comment describing the reason.
+                    description: If profiling has failed, a short comment describing the reason.
                   requested:
                     type: string
                     format: datetime
@@ -698,8 +1088,8 @@ def resource(ticket):
     """Get the resulted resource associated with a specific ticket.
     ---
     get:
-      summary: Get the resource associated to a transform request.
-      description: Returns the resource resulted from a transform request corresponding to a specific ticket.
+      summary: Get the resource associated to a profile request.
+      description: Returns the resource resulted from a profile request corresponding to a specific ticket.
       tags:
         - Resource
       parameters:
@@ -711,14 +1101,14 @@ def resource(ticket):
             type: string
       responses:
         200:
-          description: The transformed compressed spatial file.
+          description: The profiled compressed spatial file.
           content:
             application/x-tar:
               schema:
                 type: string
                 format: binary
         404:
-          description: Ticket not found or transform has not been completed.
+          description: Ticket not found or profile has not been completed.
         507:
           description: Resource does not exist.
     """
