@@ -44,18 +44,28 @@ You can browse the full [OpenAPI documentation](https://opertusmundi.github.io/p
 * `/profile/file/raster` Profile a raster file that is provided with the request
 * `/profile/file/vector` Profile a vector file that is provided with the request
 
-Required parameters (form-data):
+Parameters (form-data):
 * `resource (Required)` The given file
-* `response (Optional, default=prompt)` (see below)
+* `response (Optional, default="prompt")` (see below)
+* `basemap_provider (Optional, default="OpenStreetMap")` The basemap provider
+* `basemap_name (Optional, default="Mapnik")` The name of the basemap
+* `aspect_ratio (Optional)` The aspect ratio of the static map to be generated
+* `width (Optional)` The width (in pixels) of the static map to be generated
+* `height (Optional)` The height (in pixels) of the static map to be generated
 
 ### Profiling with path input
 * `/profile/path/netcdf` Profile a NetCDF file that its path is provided with the request
 * `/profile/path/raster` Profile a raster file that its path is provided with the request
 * `/profile/path/vector` Profile a vector file that its path is provided with the request
 
-Required parameters (x-www-form-urlencoded):
+Parameters (x-www-form-urlencoded):
 * `resource (Required)` The file's path
-* `response (Optional, default=prompt)` (see below)
+* `response (Optional, default="prompt")` (see below)
+* `basemap_provider (Optional, default="OpenStreetMap")` The basemap provider
+* `basemap_name (Optional, default="Mapnik")` The name of the basemap
+* `aspect_ratio (Optional)` The aspect ratio of the static map to be generated
+* `width (Optional)` The width (in pixels) of the static map to be generated
+* `height (Optional)` The height (in pixels) of the static map to be generated
 
 ### Deferred processing support
 * `/status/<ticket>` Get the status of a specific ticket
