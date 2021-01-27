@@ -74,9 +74,9 @@ def test_get_documentation_1():
 def test_profile_netcdf_file_input_prompt():
     data = {'resource': (open(netcdf_sample_path, 'rb'), 'sample_netcdf.nc')}
     path_to_test = '/profile/file/netcdf'
-    expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
-                       'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
-                       'variables_size'}
+    expected_fields = {'assetType', 'metadata', 'dimensionsSize', 'dimensionsList', 'dimensionsProperties',
+                       'variablesSize', 'variablesList', 'variablesProperties', 'mbr', 'temporalExtent',
+                       'noDataValues', 'statistics'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
@@ -90,8 +90,8 @@ def test_profile_netcdf_file_input_deferred():
 def test_profile_raster_file_input_prompt():
     data = {'resource': (open(raster_sample_path, 'rb'), 'sample_512.tif')}
     path_to_test = '/profile/file/raster'
-    expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
-                       'number_of_bands', 'resolution', 'statistics'}
+    expected_fields = {'assetType', 'info', 'statistics', 'histogram', 'mbr', 'resolution', 'cog', 'numberOfBands',
+                       'datatypes', 'noDataValue', 'crs', 'colorInterpretation'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
@@ -121,9 +121,9 @@ def test_profile_vector_file_input_deferred():
 def test_profile_netcdf_path_input_prompt():
     data = {'resource': netcdf_sample_path}
     path_to_test = '/profile/path/netcdf'
-    expected_fields = {'dimensions_list', 'dimensions_properties', 'dimensions_size', 'mbr', 'metadata',
-                       'no_data_values', 'statistics', 'temporal_extent', 'variables_list', 'variables_properties',
-                       'variables_size'}
+    expected_fields = {'assetType', 'metadata', 'dimensionsSize', 'dimensionsList', 'dimensionsProperties',
+                       'variablesSize', 'variablesList', 'variablesProperties', 'mbr', 'temporalExtent',
+                       'noDataValues', 'statistics'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
@@ -137,8 +137,8 @@ def test_profile_netcdf_path_input_deferred():
 def test_profile_raster_path_input_prompt():
     data = {'resource': raster_sample_path}
     path_to_test = '/profile/path/raster'
-    expected_fields = {'cog', 'color_interpetation', 'crs', 'datatypes', 'histogram', 'info', 'mbr', 'noDataValue',
-                       'number_of_bands', 'resolution', 'statistics'}
+    expected_fields = {'assetType', 'info', 'statistics', 'histogram', 'mbr', 'resolution', 'cog', 'numberOfBands',
+                       'datatypes', 'noDataValue', 'crs', 'colorInterpretation'}
     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
 
 
