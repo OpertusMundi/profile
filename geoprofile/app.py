@@ -91,6 +91,11 @@ if getenv('CORS') is not None:
 @executor.job
 def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tuple:
     """Enqueue a profile job (in case requested response type is 'deferred')."""
+    filesize = stat(src_path).st_size
+    dbc = db.get_db()
+    dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
+    dbc.commit()
+    dbc.close()
     try:
         result = {}
         if file_type == 'netcdf':
@@ -106,12 +111,6 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tupl
         return ticket, None, 0, str(e)
     else:
         return ticket, result, 1, None
-    finally:
-        filesize = stat(src_path).st_size
-        dbc = db.get_db()
-        dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
-        dbc.commit()
-        dbc.close()
 
 
 @app.route("/")
@@ -305,7 +304,7 @@ def profile_file_netcdf():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form)
@@ -419,7 +418,7 @@ def profile_file_raster():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
         report = get_resized_report(ds, form, 'raster')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="raster", form=form)
@@ -575,7 +574,7 @@ def profile_file_vector():
         src_file_path = uncompress_file(src_file_path)
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form)
@@ -713,7 +712,7 @@ def profile_path_netcdf():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -826,7 +825,7 @@ def profile_path_raster():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
         report = get_resized_report(ds, form, 'raster')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         ticket: str = create_ticket()
@@ -981,7 +980,7 @@ def profile_path_vector():
         src_file_path = uncompress_file(src_file_path)
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
-        return make_response(report, 200)
+        return make_response(report.to_json(), 200)
     # Wait for results
     else:
         ticket: str = create_ticket()

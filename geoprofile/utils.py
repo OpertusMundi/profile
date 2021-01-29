@@ -105,10 +105,10 @@ def get_resized_report(gdf, form: FlaskForm, geo_type: str):
         height = form.height.data
     if geo_type == 'vector':
         report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
-                                     aspect_ratio=ratio, width=width, height=height).to_json()
+                                     aspect_ratio=ratio, width=width, height=height)
     else:
         report = gdf.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
-                            aspect_ratio=ratio, width=width, height=height).to_json()
+                            aspect_ratio=ratio, width=width, height=height)
     return report
 
 
