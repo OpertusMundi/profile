@@ -7,16 +7,13 @@ from os import path, getenv, stat
 from flask_cors import CORS
 from flask_executor import Executor
 from flask import make_response, send_file
-
-import bigdatavoyant as bdv
-from bigdatavoyant import RasterData
 from flask_wtf import FlaskForm
 
 from . import db
 from .forms import ProfileFileForm, ProfilePathForm
 from .logging import getLoggers
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
-    get_temp_dir, get_resized_report, get_netcdf_ds
+    get_temp_dir, get_resized_report, get_ds, uncompress_file
 
 
 class OutputDirNotSet(Exception):
@@ -97,13 +94,14 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tupl
     try:
         result = {}
         if file_type == 'netcdf':
-            ds = get_netcdf_ds(src_path, form)
-            result = ds.report()
+            ds = get_ds(src_path, form, 'netcdf')
+            result = get_resized_report(ds, form, 'netcdf')
         elif file_type == 'raster':
-            ds = RasterData.from_file(src_path)
-            result = ds.report()
+            ds = get_ds(src_path, form, 'raster')
+            result = get_resized_report(ds, form, 'raster')
         elif file_type == 'vector':
-            result = get_resized_report(src_path, form)
+            ds = get_ds(src_path, form, 'vector')
+            result = get_resized_report(ds, form, 'vector')
     except Exception as e:
         return ticket, None, 0, str(e)
     else:
@@ -305,8 +303,8 @@ def profile_file_netcdf():
 
     # Immediate results
     if form.response.data == "prompt":
-        ds = get_netcdf_ds(src_file_path, form)
-        report = ds.report().to_json()
+        ds = get_ds(src_file_path, form, 'netcdf')
+        report = get_resized_report(ds, form, 'netcdf')
         return make_response(report, 200)
     # Wait for results
     else:
@@ -419,8 +417,8 @@ def profile_file_raster():
 
     # Wait for results
     if form.response.data == "prompt":
-        ds = RasterData.from_file(src_file_path)
-        report = ds.report().to_json()
+        ds = get_ds(src_file_path, form, 'raster')
+        report = get_resized_report(ds, form, 'raster')
         return make_response(report, 200)
     # Wait for results
     else:
@@ -574,7 +572,9 @@ def profile_file_vector():
 
     # Wait for results
     if form.response.data == "prompt":
-        report = get_resized_report(src_file_path, form)
+        src_file_path = uncompress_file(src_file_path)
+        ds = get_ds(src_file_path, form, 'vector')
+        report = get_resized_report(ds, form, 'vector')
         return make_response(report, 200)
     # Wait for results
     else:
@@ -711,8 +711,8 @@ def profile_path_netcdf():
 
     # Immediate results
     if form.response.data == "prompt":
-        ds = bdv.io.read_file(src_file_path, type='netcdf', lat_attr='lat')
-        report = ds.report().to_json()
+        ds = get_ds(src_file_path, form, 'netcdf')
+        report = get_resized_report(ds, form, 'netcdf')
         return make_response(report, 200)
     # Wait for results
     else:
@@ -824,8 +824,8 @@ def profile_path_raster():
 
     # Wait for results
     if form.response.data == "prompt":
-        ds = RasterData.from_file(src_file_path)
-        report = ds.report().to_json()
+        ds = get_ds(src_file_path, form, 'raster')
+        report = get_resized_report(ds, form, 'raster')
         return make_response(report, 200)
     # Wait for results
     else:
@@ -978,7 +978,9 @@ def profile_path_vector():
 
     # Wait for results
     if form.response.data == "prompt":
-        report = get_resized_report(src_file_path, form)
+        src_file_path = uncompress_file(src_file_path)
+        ds = get_ds(src_file_path, form, 'vector')
+        report = get_resized_report(ds, form, 'vector')
         return make_response(report, 200)
     # Wait for results
     else:

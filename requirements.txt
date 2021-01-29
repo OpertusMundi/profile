@@ -1,6 +1,6 @@
 Flask==1.1.2
 Flask-WTF==0.14.3
 Flask-Executor==0.9.4
-Flask-Cors==3.0.9
+Flask-Cors==3.0.10
 apispec>=4.0.0,<4.1.0
 apispec-webframeworks>=0.5.2,<0.5.3

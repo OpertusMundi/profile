@@ -4,6 +4,8 @@ import os
 from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
+
+from bigdatavoyant import RasterData
 from flask import abort
 from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
@@ -91,9 +93,7 @@ def check_directory_writable(d):
     os.unlink(file_name)
 
 
-def get_resized_report(src_file_path: str, form: FlaskForm):
-    src_file_path = uncompress_file(src_file_path)
-    gdf = bdv.io.read_file(src_file_path)
+def get_resized_report(gdf, form: FlaskForm, geo_type: str):
     ratio = None
     width = 1920
     height = None
@@ -103,21 +103,38 @@ def get_resized_report(src_file_path: str, form: FlaskForm):
         width = form.width.data
     if form.height.data:
         height = form.height.data
-    report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
-                                 aspect_ratio=ratio, width=width, height=height).to_json()
+    if geo_type == 'vector':
+        report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
+                                     aspect_ratio=ratio, width=width, height=height).to_json()
+    else:
+        report = gdf.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
+                            aspect_ratio=ratio, width=width, height=height).to_json()
     return report
 
 
-def get_netcdf_ds(src_path: str, form: FlaskForm):
-    lat_attr = 'lat'
-    lon_attr = 'lon'
-    time_attr = 'time'
-    if form.lat.data:
-        lat_attr = form.lat.data
-    if form.lon.data:
-        lon_attr = form.lon.data
-    if form.time.data:
-        time_attr = form.time.data
-    ds = bdv.io.read_file(src_path, type='netcdf', lat_attr=lat_attr, lon_attr=lon_attr,
-                          time_attr=time_attr)
-    return ds
+def get_ds(src_path: str, form: FlaskForm, geo_type: str):
+    if geo_type == 'vector' or geo_type == 'netcdf':
+        crs = None
+        if form.crs.data:
+            crs = form.crs.data
+        if geo_type == 'vector':
+            lat_attr = None
+            lon_attr = None
+            if form.lat.data:
+                lat_attr = form.lat.data
+            if form.lon.data:
+                lon_attr = form.lon.data
+            return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, targetCRS=crs)
+        elif geo_type == 'netcdf':
+            lat_attr = 'lat'
+            lon_attr = 'lon'
+            time_attr = 'time'
+            if form.lat.data:
+                lat_attr = form.lat.data
+            if form.lon.data:
+                lon_attr = form.lon.data
+            if form.time.data:
+                time_attr = form.time.data
+            return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, targetCRS=crs)
+    elif geo_type == 'raster':
+        return RasterData.from_file(src_path)

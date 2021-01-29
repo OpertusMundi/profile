@@ -28,6 +28,8 @@ class BaseForm(FlaskForm):
     lon = StringField('lon', validators=[Optional()])
     time = StringField('time', validators=[Optional()])
 
+    crs = StringField('crs', validators=[Optional()])
+
     class Meta:
         csrf = False
 
