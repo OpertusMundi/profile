@@ -71,6 +71,7 @@ def executor_callback(future):
         accountLogger(ticket=ticket, success=success, execution_start=time, execution_time=execution_time,
                       comment=comment, filesize=filesize)
         dbc.close()
+        mainLogger.info(f'Processing of ticket: {ticket} is completed successfully')
 
 
 # Ensure the instance folder exists and initialize application, db and executor.
@@ -96,6 +97,7 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tupl
     dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
     dbc.commit()
     dbc.close()
+    mainLogger.info(f'Starting processing ticket: {ticket}')
     try:
         result = {}
         if file_type == 'netcdf':
@@ -108,6 +110,7 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tupl
             ds = get_ds(src_path, form, 'vector')
             result = get_resized_report(ds, form, 'vector')
     except Exception as e:
+        mainLogger.error(f'Processing of ticket: {ticket} failed')
         return ticket, None, 0, str(e)
     else:
         return ticket, result, 1, None
@@ -295,7 +298,7 @@ def profile_file_netcdf():
     """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/file/netcdf with file: {form.resource.data.filename}")
     tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
     src_file_path: str = save_to_temp(form, tmp_dir, ticket)
@@ -409,7 +412,7 @@ def profile_file_raster():
     """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/file/raster with file: {form.resource.data.filename}")
     tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
     src_file_path: str = save_to_temp(form, tmp_dir, ticket)
@@ -564,7 +567,7 @@ def profile_file_vector():
     """
     form = ProfileFileForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/file/vector with file: {form.resource.data.filename}")
     tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
     src_file_path: str = save_to_temp(form, tmp_dir, ticket)
@@ -705,7 +708,7 @@ def profile_path_netcdf():
     """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/path/netcdf with file: {form.resource.data}")
     src_file_path: str = form.resource.data
 
     # Immediate results
@@ -818,7 +821,7 @@ def profile_path_raster():
     """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/path/raster with file: {form.resource.data}")
     src_file_path: str = form.resource.data
 
     # Wait for results
@@ -972,7 +975,7 @@ def profile_path_vector():
     """
     form = ProfilePathForm()
     validate_form(form, mainLogger)
-
+    mainLogger.info(f"Starting /profile/path/vector with file: {form.resource.data}")
     src_file_path: str = form.resource.data
 
     # Wait for results
