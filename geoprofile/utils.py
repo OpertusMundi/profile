@@ -1,3 +1,4 @@
+import csv
 import tarfile
 import zipfile
 import os
@@ -112,6 +113,16 @@ def get_resized_report(gdf, form: FlaskForm, geo_type: str):
     return report
 
 
+def get_delimiter(ds_path: str):
+    """ Returns the delimiter of the csv file """
+    if ds_path.split('.')[-1] != 'csv':
+        return None
+    with open(ds_path) as f:
+        first_line = f.readline()
+        s = csv.Sniffer()
+        return str(s.sniff(first_line).delimiter)
+
+
 def get_ds(src_path: str, form: FlaskForm, geo_type: str):
     if geo_type == 'vector' or geo_type == 'netcdf':
         crs = None
@@ -124,7 +135,7 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                 lat_attr = form.lat.data
             if form.lon.data:
                 lon_attr = form.lon.data
-            return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, targetCRS=crs)
+            return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, targetCRS=crs, delimiter=get_delimiter(src_path))
         elif geo_type == 'netcdf':
             lat_attr = 'lat'
             lon_attr = 'lon'
