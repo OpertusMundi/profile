@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='geoprofile',
-    version='0.1.0',
+    version='1.0.0',
     description='Raster and vector files profiling service',
     license='MIT',
     packages=setuptools.find_packages(exclude=('tests*',)),

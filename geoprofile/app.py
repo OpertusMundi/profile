@@ -241,6 +241,9 @@ def profile_file_netcdf():
                         assetType:
                           type: string
                           description: The type of the asset (always *netCDF*).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         metadata:
                           type: object
                           description: File's metadata
@@ -355,6 +358,9 @@ def profile_file_raster():
                         assetType:
                           type: string
                           description: The type of the asset (always *raster*).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         info:
                           type: object
                           description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
@@ -666,6 +672,9 @@ def profile_path_netcdf():
                         assetType:
                           type: string
                           description: The type of the asset (always *netCDF*).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         metadata:
                           type: object
                           description: File's metadata
@@ -782,6 +791,9 @@ def profile_path_raster():
                         assetType:
                           type: string
                           description: The type of the asset (always *raster*).
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         info:
                           type: object
                           description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
