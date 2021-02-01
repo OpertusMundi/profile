@@ -29,6 +29,7 @@ class BaseForm(FlaskForm):
     time = StringField('time', validators=[Optional()])
 
     crs = StringField('crs', validators=[Optional()])
+    geometry = StringField('geometry', validators=[Optional()], default='wkt')
 
     class Meta:
         csrf = False
