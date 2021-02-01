@@ -150,7 +150,7 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lon_attr = form.lon.data
                 if form.time.data:
                     time_attr = form.time.data
-                return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, targetCRS=crs)
+                return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, crs=crs)
         elif geo_type == 'raster':
             return RasterData.from_file(src_path)
     except FileNotFoundError:
