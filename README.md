@@ -52,6 +52,12 @@ Parameters (form-data):
 * `aspect_ratio (Optional)` The aspect ratio of the static map to be generated
 * `width (Optional)` The width (in pixels) of the static map to be generated
 * `height (Optional)` The height (in pixels) of the static map to be generated
+* `lat (Optional)` The column name containing the latitude information
+* `lon (Optional)` The column name containing the longitude information
+* `time (Optional)` The column name containing the time information
+* `crs (Optional)` The crs
+* `geometry (Optional, default="wkt")` The column name containing the geometry information
+
 
 ### Profiling with path input
 * `/profile/path/netcdf` Profile a NetCDF file that its path is provided with the request
@@ -66,6 +72,12 @@ Parameters (x-www-form-urlencoded):
 * `aspect_ratio (Optional)` The aspect ratio of the static map to be generated
 * `width (Optional)` The width (in pixels) of the static map to be generated
 * `height (Optional)` The height (in pixels) of the static map to be generated
+* `lat (Optional)` The column name containing the latitude information
+* `lon (Optional)` The column name containing the longitude information
+* `time (Optional)` The column name containing the time information
+* `crs (Optional)` The crs
+* `geometry (Optional, default="wkt")` The column name containing the geometry information
+
 
 ### Deferred processing support
 * `/status/<ticket>` Get the status of a specific ticket

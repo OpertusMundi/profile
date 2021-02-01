@@ -34,6 +34,10 @@
                                         "description": "The basemap provider",
                                         "type": "string"
                                     },
+                                    "crs": {
+                                        "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
                                     "height": {
                                         "description": "The height (in pixels) of the static map to be generated",
                                         "type": "integer"
@@ -338,9 +342,25 @@
                                         "description": "The basemap provider",
                                         "type": "string"
                                     },
+                                    "crs": {
+                                        "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
+                                    "geometry": {
+                                        "description": "The column name with the geometry information",
+                                        "type": "string"
+                                    },
                                     "height": {
                                         "description": "The height (in pixels) of the static map to be generated",
                                         "type": "integer"
+                                    },
+                                    "lat": {
+                                        "description": "The column name with the latitude information",
+                                        "type": "string"
+                                    },
+                                    "lon": {
+                                        "description": "The column name with the longitude information",
+                                        "type": "string"
                                     },
                                     "resource": {
                                         "description": "The spatial file.",
@@ -525,6 +545,10 @@
                                     "basemap_provider": {
                                         "default": "OpenStreetMap",
                                         "description": "The basemap provider",
+                                        "type": "string"
+                                    },
+                                    "crs": {
+                                        "description": "The dataset's crs",
                                         "type": "string"
                                     },
                                     "height": {
@@ -831,9 +855,25 @@
                                         "description": "The basemap provider",
                                         "type": "string"
                                     },
+                                    "crs": {
+                                        "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
+                                    "geometry": {
+                                        "description": "The column name with the geometry information",
+                                        "type": "string"
+                                    },
                                     "height": {
                                         "description": "The height (in pixels) of the static map to be generated",
                                         "type": "integer"
+                                    },
+                                    "lat": {
+                                        "description": "The column name with the latitude information",
+                                        "type": "string"
+                                    },
+                                    "lon": {
+                                        "description": "The column name with the longitude information",
+                                        "type": "string"
                                     },
                                     "resource": {
                                         "description": "The spatial file.",

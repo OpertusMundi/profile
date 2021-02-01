@@ -225,6 +225,9 @@ def profile_file_netcdf():
                     time:
                       type: string
                       description: The column name with the time information
+                    crs:
+                      type: string
+                      description: The dataset's crs
                   required:
                     - resource
           responses:
@@ -470,6 +473,18 @@ def profile_file_vector():
                     height:
                       type: integer
                       description: The height (in pixels) of the static map to be generated
+                    lat:
+                      type: string
+                      description: The column name with the latitude information
+                    lon:
+                      type: string
+                      description: The column name with the longitude information
+                    crs:
+                      type: string
+                      description: The dataset's crs
+                    geometry:
+                      type: string
+                      description: The column name with the geometry information
                   required:
                     - resource
           responses:
@@ -635,6 +650,9 @@ def profile_path_netcdf():
                     time:
                       type: string
                       description: The column name with the time information
+                    crs:
+                      type: string
+                      description: The dataset's crs
                   required:
                     - resource
           responses:
@@ -884,6 +902,18 @@ def profile_path_vector():
                     height:
                       type: integer
                       description: The height (in pixels) of the static map to be generated
+                    lat:
+                      type: string
+                      description: The column name with the latitude information
+                    lon:
+                      type: string
+                      description: The column name with the longitude information
+                    crs:
+                      type: string
+                      description: The dataset's crs
+                    geometry:
+                      type: string
+                      description: The column name with the geometry information
                   required:
                     - resource
           responses:
