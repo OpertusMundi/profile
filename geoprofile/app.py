@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 import json
-from flask import Flask
+from flask import Flask, abort
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
 from os import path, getenv, stat
@@ -711,6 +711,9 @@ def profile_path_netcdf():
     mainLogger.info(f"Starting /profile/path/netcdf with file: {form.resource.data}")
     src_file_path: str = form.resource.data
 
+    if not path.exists(src_file_path):
+        abort(400, 'File not found')
+
     # Immediate results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
@@ -823,6 +826,9 @@ def profile_path_raster():
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/path/raster with file: {form.resource.data}")
     src_file_path: str = form.resource.data
+
+    if not path.exists(src_file_path):
+        abort(400, 'File not found')
 
     # Wait for results
     if form.response.data == "prompt":
@@ -977,6 +983,9 @@ def profile_path_vector():
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/path/vector with file: {form.resource.data}")
     src_file_path: str = form.resource.data
+
+    if not path.exists(src_file_path):
+        abort(400, 'File not found')
 
     # Wait for results
     if form.response.data == "prompt":

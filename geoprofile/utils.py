@@ -45,19 +45,22 @@ def get_extracted_path(folder_path: str):
 
 def uncompress_file(src_file: str) -> str:
     """Checks whether the file is compressed and uncompresses it"""
-    if not path.isdir(src_file):
-        src_path = path.dirname(src_file)
-        if tarfile.is_tarfile(src_file):
-            with tarfile.open(src_file, 'r') as handle:
-                handle.extractall(src_path)
-                extracted_path = get_extracted_path(src_path)
-                return extracted_path
-        elif zipfile.is_zipfile(src_file):
-            with zipfile.ZipFile(src_file, 'r') as handle:
-                handle.extractall(src_path)
-                extracted_path = get_extracted_path(src_path)
-                return extracted_path
-    return src_file
+    try:
+        if not path.isdir(src_file):
+            src_path = path.dirname(src_file)
+            if tarfile.is_tarfile(src_file):
+                with tarfile.open(src_file, 'r') as handle:
+                    handle.extractall(src_path)
+                    extracted_path = get_extracted_path(src_path)
+                    return extracted_path
+            elif zipfile.is_zipfile(src_file):
+                with zipfile.ZipFile(src_file, 'r') as handle:
+                    handle.extractall(src_path)
+                    extracted_path = get_extracted_path(src_path)
+                    return extracted_path
+        return src_file
+    except FileNotFoundError:
+        abort(400, 'File not found')
 
 
 def mkdir(folder_path: str) -> None:
@@ -124,28 +127,31 @@ def get_delimiter(ds_path: str):
 
 
 def get_ds(src_path: str, form: FlaskForm, geo_type: str):
-    if geo_type == 'vector' or geo_type == 'netcdf':
-        crs = None
-        if form.crs.data:
-            crs = form.crs.data
-        if geo_type == 'vector':
-            lat_attr = None
-            lon_attr = None
-            if form.lat.data:
-                lat_attr = form.lat.data
-            if form.lon.data:
-                lon_attr = form.lon.data
-            return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, crs=crs, delimiter=get_delimiter(src_path), geom=form.geometry.data)
-        elif geo_type == 'netcdf':
-            lat_attr = 'lat'
-            lon_attr = 'lon'
-            time_attr = 'time'
-            if form.lat.data:
-                lat_attr = form.lat.data
-            if form.lon.data:
-                lon_attr = form.lon.data
-            if form.time.data:
-                time_attr = form.time.data
-            return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, targetCRS=crs)
-    elif geo_type == 'raster':
-        return RasterData.from_file(src_path)
+    try:
+        if geo_type == 'vector' or geo_type == 'netcdf':
+            crs = None
+            if form.crs.data:
+                crs = form.crs.data
+            if geo_type == 'vector':
+                lat_attr = None
+                lon_attr = None
+                if form.lat.data:
+                    lat_attr = form.lat.data
+                if form.lon.data:
+                    lon_attr = form.lon.data
+                return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, crs=crs, delimiter=get_delimiter(src_path), geom=form.geometry.data)
+            elif geo_type == 'netcdf':
+                lat_attr = 'lat'
+                lon_attr = 'lon'
+                time_attr = 'time'
+                if form.lat.data:
+                    lat_attr = form.lat.data
+                if form.lon.data:
+                    lon_attr = form.lon.data
+                if form.time.data:
+                    time_attr = form.time.data
+                return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, targetCRS=crs)
+        elif geo_type == 'raster':
+            return RasterData.from_file(src_path)
+    except FileNotFoundError:
+        abort(400, 'File not found')
