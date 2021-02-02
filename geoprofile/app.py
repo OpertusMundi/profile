@@ -593,9 +593,10 @@ def profile_file_vector():
     ticket: str = create_ticket()
     src_file_path: str = save_to_temp(form, tmp_dir, ticket)
 
+    src_file_path = uncompress_file(src_file_path)
+
     # Wait for results
     if form.response.data == "prompt":
-        src_file_path = uncompress_file(src_file_path)
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
         return make_response(report.to_json(), 200)
@@ -1029,9 +1030,10 @@ def profile_path_vector():
     if not path.exists(src_file_path):
         abort(400, 'File not found')
 
+    src_file_path = uncompress_file(src_file_path)
+
     # Wait for results
     if form.response.data == "prompt":
-        src_file_path = uncompress_file(src_file_path)
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
         return make_response(report.to_json(), 200)
