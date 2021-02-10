@@ -240,43 +240,148 @@ def profile_file_netcdf():
                       properties:
                         assetType:
                           type: string
-                          description: The type of the asset (always *netCDF*).
+                          description: The type of the asset (always *NetCDF*).
+                          example: NetCDF
                         mbrStatic:
                           type: string
                           description: A PNG static map with the MBR, base64 encoded.
                         metadata:
                           type: object
-                          description: File's metadata
+                          description: The metadata object as written in the file. The key is a free field for the data provider, usually describing the given information.
+                          additionalProperties:
+                            type: string
                         dimensionsSize:
                           type: integer
-                          description: Number of dimensions.
+                          description: The number of the dimensions.
+                          example: 4
                         dimensionsList:
-                          type: object
-                          description: List of dimensions.
+                          type: array
+                          description: A list with the dimensions.
+                          items:
+                            type: string
+                            description: The dimension name.
+                          example:
+                            - lon
+                            - lat
+                            - level
+                            - time
                         dimensionsProperties:
                           type: object
-                          description: The properties for each dimension.
+                          description: The properties of each dimension. The key is the dimension.
+                          additionalProperties:
+                            type: object
+                            description: "The properties of the specific dimension. **Note**: below are only the common properties; other custom properties may also be present."
+                            properties:
+                              type:
+                                type: string
+                                description: The datatype of the dimension.
+                                example: float64
+                              size:
+                                type: integer
+                                description: The size of the dimension variable.
+                                example: 128
+                              long_name:
+                                type: string
+                                description: The long name of the dimension.
+                                example: longitude
+                              units:
+                                type: string
+                                description: A description of the dimension's units.
+                                example: degrees_east
                         variablesSize:
                           type: integer
                           description: Number of variables.
+                          example: 12
                         variablesList:
-                          type: object
-                          description: List of variables.
+                          type: array
+                          description: A list with the variables.
+                          items:
+                            type: string
+                            description: The name of the variable.
+                          example:
+                            - temperature
+                            - pm1.0
+                            - pm2.5
+                            - pm10
                         variablesProperties:
                           type: object
-                          description: The properties for each variable.
+                          description: The properties for each variable. The key is the variable.
+                          additionalProperties:
+                            type: object
+                            description: "The properties of the specific variable. **Note**: below are only the common properties; other custom properties may also be present."
+                            properties:
+                              dimensions:
+                                type: array
+                                description: A list of the dimensions that this variable depends on.
+                                items:
+                                  type: string
+                                example:
+                                  - lat
+                                  - lon
+                              type:
+                                type: string
+                                description: The datatype of the variable.
+                                example: float64
+                              size:
+                                type: integer
+                                description: The size of the variable.
+                                example: 128
+                              units:
+                                type: string
+                                description: A description of the variable's units.
+                                example: degrees_east
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
                         temporalExtent:
                           type: string
-                          description: A string representing the temporal extend of the dataset.
+                          description: A free-text string representing the temporal extend of the dataset.
+                          example: 0.000000 - 720.000000 hours
                         noDataValues:
                           type: object
-                          description: The no-data value for each the variables.
+                          description: The no-data value for each the variables. The key is the variable.
+                          additionalProperties:
+                            type: numeric
+                            description: The no-data value for the specific variable.
                         statistics:
                           type: object
-                          description: General statistics for each of the variables (*missing*, *min*, *max*, *mean*, *std*, *variance* and whether the data are *contiguous*).
+                          description: Descriptive statistics for each of the variables. The key is the variable.
+                          additionalProperties:
+                            type: object
+                            description: Descriptive statistics for the specific variable.
+                            properties:
+                              count:
+                                type: integer
+                                description: The number of values for the specific variable.
+                                example: 220
+                              missing:
+                                type: integer
+                                description: The number of missing values for the specific variable.
+                                example: 0
+                              min:
+                                type: numeric
+                                description: The minimum value of the specific variable.
+                                example: 0.4
+                              max:
+                                type: numeric
+                                description: The maximum value of the specific variable.
+                                example: 20.6
+                              mean:
+                                type: numeric
+                                description: The mean value of the specific variable.
+                                example: 10.7
+                              std:
+                                type: numeric
+                                description: The standard deviation for the specific variable.
+                                example: 2.4
+                              variance:
+                                type: numeric
+                                description: The variance of the specific variable.
+                                example: 7.9
+                              contiguous:
+                                type: boolean
+                                description: Whether the data are contiguous or not.
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
@@ -358,42 +463,155 @@ def profile_file_raster():
                         assetType:
                           type: string
                           description: The type of the asset (always *raster*).
-                        mbrStatic:
-                          type: string
-                          description: A PNG static map with the MBR, base64 encoded.
+                          example: raster
                         info:
                           type: object
-                          description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
+                          description: General information about the raster file.
+                          properties:
+                            metadata:
+                              type: object
+                              description: Metadata of the the raster as written in the file. The keys are free-text.
+                              additionalProperties:
+                                type: string
+                              example:
+                                AREA_OR_POINT: Point
+                                TIFFTAG_MAXSAMPLEVALUE: 254
+                            imageStructure:
+                              type: object
+                              description: Various values describing the image structure. The keys depend on the raster.
+                              additionalProperties:
+                                type: string
+                              example:
+                                COMPRESSION: YCbCr JPEG
+                                INTERLEAVE: PIXEL
+                                SOURCE_COLOR_SPACE: YCbCr
+                            driver:
+                              type: string
+                              description: The driver used to open the raster.
+                              example: GeoTIFF
+                            files:
+                              type: array
+                              description: A list of the files associated with the raster.
+                              items:
+                                type: string
+                                description: Filename.
+                              example:
+                                - example.tif
+                            width:
+                              type: integer
+                              description: The width in pixels.
+                              example: 1920
+                            height:
+                              type: integer
+                              description: The height in pixels.
+                              example: 1080
+                            bands:
+                              type: array
+                              description: A list with the bands included in the raster.
+                              items:
+                                type: string
+                                description: The name of the band.
+                              example:
+                                - RED
                         statistics:
-                          type: object
-                          description: A list with the statistics for each band of the raster file.
+                          type: array
+                          description: A list with descriptive statistics for each band of the raster file.
+                          items:
+                            type: object
+                            description: Descriptive statistics for the n-th band.
+                            properties:
+                              min:
+                                type: numeric
+                                description: The minimun value in the band.
+                                example: 0.0
+                              max:
+                                type: numeric
+                                description: The maximum value in the band.
+                                example: 255.0
+                              mean:
+                                type: numeric
+                                description: The mean value in the band.
+                                example: 180.5475
+                              std:
+                                type: numeric
+                                description: The standard deviation in the band.
+                                example: 46.4463
                         histogram:
-                          type: object
-                          description: The default histogram of the raster file for each band.
+                          type: array
+                          description: The default histogram of the raster for each band.
+                          items:
+                            type: array
+                            description: The default histogram of the n-th band. It contains the minimum and the maximum Pixel Value, the total number of pixel values, and an array with the frequencies for each Pixel Value.
+                            items:
+                              anyOf:
+                                -
+                                  type: numeric
+                                  description: The minimum Pixel Value.
+                                -
+                                  type: numeric
+                                  description: The maximum Pixel Value.
+                                -
+                                  type: integer
+                                  description: The total number of pixel values.
+                                -
+                                  type: array
+                                  description: An array with the frequencies for each Pixel Value (has lentgh equal to the total number of Pixel Values).
+                          example: [-0.5, 255.5, 256, [2513898, 31982, 11152, 26086, 12858]]
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         resolution:
                           type: object
-                          description: The resolution for each dimension, and the unit of measurement.
+                          description: The resolution for each axis, and the unit of measurement.
+                          properties:
+                            x:
+                              type: numeric
+                              description: Resolution in x-axis.
+                              example: 0.16726222
+                            y:
+                              type: numeric
+                              description: Resolution in y-axis.
+                              example: 0.16726222
+                            unit:
+                              type: string
+                              description: The unit of resolution.
+                              example: metre
                         cog:
                           type: boolean
-                          description: If raster is GeoTiff, whether it is Cloud-Optimized or not.
+                          description: In case the raster is GeoTiff, whether it is Cloud-Optimized or not.
                         numberOfBands:
                           type: integer
                           description: The number of bands in the raster.
+                          example: 1
                         datatypes:
-                          type: object
-                          description: The data type for each band.
+                          type: array
+                          description: The data type of each band.
+                          items:
+                            type: string
+                            description: The data type of the n-th band.
+                            example: Byte
                         noDataValue:
-                          type: object
-                          description: The no-data value for each band.
+                          type: array
+                          description: The no-data value of each band.
+                          items:
+                            type: numeric
+                            description: The no-data value of the n-th band.
+                            example: null
                         crs:
                           type: string
                           description: The short name of the dataset's native Coordinate Reference System (CRS).
+                          example: EPSG:4326
                         colorInterpretation:
-                          type: object
+                          type: array
                           description: The Color Interpretation for each band.
+                          items:
+                            type: string
+                            description: The color interpretation for the n-th band.
+                            example: RED
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
@@ -504,21 +722,29 @@ def profile_file_vector():
                         assetType:
                           type: string
                           description: One of *tabular* or *vector*.
+                          example: vector
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
                         mbrStatic:
                           type: string
                           description: A PNG static map with the MBR, base64 encoded.
                         featureCount:
                           type: integer
                           description: The number of features in the dataset.
+                          example: 23432
                         count:
                           type: object
-                          description: Count not null values for each attribute in the dataset.
+                          description: Count not null values for each attribute in the dataset. The key is the attribute name.
+                          additionalProperties:
+                            type: integer
+                            description: The not null values for the specific attribute.
+                            example: 2334
                         convexHull:
                           type: string
                           description: The Well-Known-Text representation of the Convex Hull for all geometries.
+                          example: POLYGON ((6.35585 49.4439, 5.73602 49.8337, 6.36222 49.4469, 6.35691 49.4439, 6.35585 49.4439))
                         convexHullStatic:
                           type: string
                           description: A PNG static map showing the convex hull, base64 encoded.
@@ -528,39 +754,311 @@ def profile_file_vector():
                         crs:
                           type: string
                           description: The short name of the dataset's native Coordinate Reference System (CRS).
+                          example: EPSG:4326
                         attributes:
-                          type: object
-                          description: A list with the attributes of the dataset.
+                          type: array
+                          description: A list with all attributes of the dataset.
+                          items:
+                            type: string
+                            description: The attribute name.
+                          example:
+                            - attributeName1
+                            - attributeName2
+                            - attributeName3
                         datatypes:
                           type: object
-                          description: The datatypes for each of the dataset's attributes.
+                          description: The datatypes for each of the dataset's attributes. The key is the attribute name.
+                          additionalProperties:
+                            type: string
+                            description: The datatype of the specific attribute.
+                            examples:
+                              - str
+                              - int64
+                              - float64
                         distribution:
                           type: object
-                          description: The distribution of the values for each attribute in the dataset.
+                          description: The distribution of the values for each *categorical* attribute in the dataset. The key is the attribute name.
+                          additionalProperties:
+                            type: object
+                            description: The frequency of each value for the specific attribute. The key is the value.
+                            additionalProperties:
+                              type: integer
+                              description: The frequency of the specific value in the attribute.
+                              example: 244
+                          example:
+                            categoricalAttr1:
+                              value1: 632
+                              value2: 432
+                              value3: 332
+                            categoricalAttr2:
+                              value4: 434
+                              value5: 232
+                              value6: 134
                         quantiles:
                           type: object
                           description: The 5, 25, 50, 75, 95 quantiles for each of the numeric attributes in the dataset.
+                          properties:
+                            5:
+                              type: object
+                              description: The value of the 5-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 5-quantile value for the specific attribute.
+                                example: 0.3
+                            25:
+                              type: object
+                              description: The value of the 25-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 25-quantile value for the specific attribute.
+                                example: 0.4
+                            50:
+                              type: object
+                              description: The value of the 50-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 50-quantile value for the specific attribute.
+                                example: 0.43
+                            75:
+                              type: object
+                              description: The value of the 75-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 75-quantile value for the specific attribute.
+                                example: 0.45
+                            95:
+                              type: object
+                              description: The value of the 95-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 95-quantile value for the specific attribute.
+                                example: 0.48
                         distinct:
                           type: object
-                          description: The distinct values for each of the attributes in the dataset.
+                          description: The distinct values for each of the *categorical* attributes in the dataset. The key is the attribute name.
+                          example:
+                            categoricalAttr1:
+                              - TRANSPORT
+                              - SETTLEMENTS
+                              - BUSINESS
+                            categoricalAttr2:
+                              - LU
+                              - DE
+                              - GR
+                          additionalProperties:
+                            type: array
+                            description: A list with the distinct values for the specific attribute.
+                            items:
+                              type: string
                         recurring:
                           type: object
                           description: The most frequent values for each of the attributes in the dataset.
                         heatmap:
                           type: object
                           description: A GeoJSON with a heatmap of the geometries.
+                          properties:
+                            type:
+                              type: string
+                              example: FeatureCollection
+                            features:
+                              type: array
+                              minItems: 0
+                              description: Each feature represents a contour plot.
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  type:
+                                    type: string
+                                    example: Feature
+                                  properties:
+                                    type: object
+                                    description: Style properties for the plot.
+                                    properties:
+                                      fill:
+                                        type: string
+                                        description: The hex color code for the fill.
+                                        example: "#002ed1"
+                                      fill-opacity:
+                                        type: numeric
+                                        description: The opacity for the fill color (0-1).
+                                        example: 0.4
+                                      stroke:
+                                        type: string
+                                        description: The hex color code for the stroke.
+                                        example: "#002ed1"
+                                      stroke-opacity:
+                                        type: numeric
+                                        description: The opacity for the stroke (0-1).
+                                        example: 1
+                                      stroke-width:
+                                        type: numeric
+                                        description: The width (in pixels) of the stroke.
+                                        example: 1
+                                      title:
+                                        type: string
+                                        description: The title for the specific contour.
+                                        example: 0.00-1.50
+                                  geometry:
+                                    type: object
+                                    description: The geometry of the contour.
+                                    properties:
+                                      type:
+                                        type: string
+                                        description: The geometry type.
+                                        example: MultiPolygon
+                                      coordinates:
+                                        type: array
+                                        description: The coordinates of the geometry
+                                        minItems: 1
+                                        items:
+                                          type: array
+                                          minItems: 1
+                                          items:
+                                            type: array
+                                            minItems: 4
+                                            example:
+                                              -
+                                                - 19.512540
+                                                - 0.002680
+                                              -
+                                                - 19.512542
+                                                - 0.002677
+                                              -
+                                                - 19.512545
+                                                - 0.002671
+                                              -
+                                                - 19.512540
+                                                - 0.002680
+                                            items:
+                                              type: array
+                                              minItems: 2
+                                              maxItems: 2
+                                              items:
+                                                type: numeric
                         heatmapStatic:
                           type: string
                           description: A PNG static heatmap, base64 encoded.
                         clusters:
                           type: object
-                          description: A GeoJSON with clustered geometries.
+                          description: A GeoJSON containing the clustered geometries.
+                          properties:
+                            type:
+                              type: string
+                              example: FeatureCollection
+                            features:
+                              type: array
+                              minItems: 0
+                              description: Each feature represents one cluster.
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  type:
+                                    type: string
+                                    example: Feature
+                                  properties:
+                                    type: object
+                                    description: Additional properties of the cluster.
+                                    properties:
+                                      cluster_id:
+                                        type: integer
+                                        description: The cluster id.
+                                      size:
+                                        type: integer
+                                        description: The size of the cluster; how many geometries the cluster contains.
+                                        example: 420
+                                  geometry:
+                                    type: object
+                                    description: The geometry of the cluster.
+                                    properties:
+                                      type:
+                                        type: string
+                                        description: The geometry type.
+                                        example: Polygon
+                                      coordinates:
+                                        type: array
+                                        description: The coordinates of the geometry
+                                        minItems: 1
+                                        items:
+                                          type: array
+                                          minItems: 4
+                                          example:
+                                            -
+                                              - 5.92139730
+                                              - 49.7208867
+                                            -
+                                              - 6.92140223
+                                              - 49.7208946
+                                            -
+                                              - 6.92143543
+                                              - 49.7202454
+                                            -
+                                              - 5.92139730
+                                              - 49.7208867
+                                          items:
+                                            type: array
+                                            minItems: 2
+                                            maxItems: 2
+                                            items:
+                                              type: numeric
                         clustersStatic:
                           type: string
                           description: A PNG static map with the clustered geometries, base64 encoded.
                         statistics:
                           type: object
-                          description: Statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
+                          description: Descriptive statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
+                          properties:
+                            min:
+                              type: object
+                              description: The *minimum* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 0.4
+                                attr2: 0.2
+                            max:
+                              type: object
+                              description: The *maximum* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 10.1
+                                attr2: 8.7
+                            mean:
+                              type: object
+                              description: The *mean* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 5.2
+                                attr2: 4.6
+                            median:
+                              type: object
+                              description: The *median* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 5.3
+                                attr2: 4.5
+                            std:
+                              type: object
+                              description: The *standard deviation* for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 0.8
+                                attr2: 0.6
+                            sum:
+                              type: object
+                              description: The *sum* of of all values for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 123.3
+                                attr2: 96.3
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
@@ -672,43 +1170,148 @@ def profile_path_netcdf():
                       properties:
                         assetType:
                           type: string
-                          description: The type of the asset (always *netCDF*).
+                          description: The type of the asset (always *NetCDF*).
+                          example: NetCDF
                         mbrStatic:
                           type: string
                           description: A PNG static map with the MBR, base64 encoded.
                         metadata:
                           type: object
-                          description: File's metadata
+                          description: The metadata object as written in the file. The key is a free field for the data provider, usually describing the given information.
+                          additionalProperties:
+                            type: string
                         dimensionsSize:
                           type: integer
-                          description: Number of dimensions.
+                          description: The number of the dimensions.
+                          example: 4
                         dimensionsList:
-                          type: object
-                          description: List of dimensions.
+                          type: array
+                          description: A list with the dimensions.
+                          items:
+                            type: string
+                            description: The dimension name.
+                          example:
+                            - lon
+                            - lat
+                            - level
+                            - time
                         dimensionsProperties:
                           type: object
-                          description: The properties for each dimension.
+                          description: The properties of each dimension. The key is the dimension.
+                          additionalProperties:
+                            type: object
+                            description: "The properties of the specific dimension. **Note**: below are only the common properties; other custom properties may also be present."
+                            properties:
+                              type:
+                                type: string
+                                description: The datatype of the dimension.
+                                example: float64
+                              size:
+                                type: integer
+                                description: The size of the dimension variable.
+                                example: 128
+                              long_name:
+                                type: string
+                                description: The long name of the dimension.
+                                example: longitude
+                              units:
+                                type: string
+                                description: A description of the dimension's units.
+                                example: degrees_east
                         variablesSize:
                           type: integer
                           description: Number of variables.
+                          example: 12
                         variablesList:
-                          type: object
-                          description: List of variables.
+                          type: array
+                          description: A list with the variables.
+                          items:
+                            type: string
+                            description: The name of the variable.
+                          example:
+                            - temperature
+                            - pm1.0
+                            - pm2.5
+                            - pm10
                         variablesProperties:
                           type: object
-                          description: The properties for each variable.
+                          description: The properties for each variable. The key is the variable.
+                          additionalProperties:
+                            type: object
+                            description: "The properties of the specific variable. **Note**: below are only the common properties; other custom properties may also be present."
+                            properties:
+                              dimensions:
+                                type: array
+                                description: A list of the dimensions that this variable depends on.
+                                items:
+                                  type: string
+                                example:
+                                  - lat
+                                  - lon
+                              type:
+                                type: string
+                                description: The datatype of the variable.
+                                example: float64
+                              size:
+                                type: integer
+                                description: The size of the variable.
+                                example: 128
+                              units:
+                                type: string
+                                description: A description of the variable's units.
+                                example: degrees_east
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
                         temporalExtent:
                           type: string
-                          description: A string representing the temporal extend of the dataset.
+                          description: A free-text string representing the temporal extend of the dataset.
+                          example: 0.000000 - 720.000000 hours
                         noDataValues:
                           type: object
-                          description: The no-data value for each the variables.
+                          description: The no-data value for each the variables. The key is the variable.
+                          additionalProperties:
+                            type: numeric
+                            description: The no-data value for the specific variable.
                         statistics:
                           type: object
-                          description: General statistics for each of the variables (*missing*, *min*, *max*, *mean*, *std*, *variance* and whether the data are *contiguous*).
+                          description: Descriptive statistics for each of the variables. The key is the variable.
+                          additionalProperties:
+                            type: object
+                            description: Descriptive statistics for the specific variable.
+                            properties:
+                              count:
+                                type: integer
+                                description: The number of values for the specific variable.
+                                example: 220
+                              missing:
+                                type: integer
+                                description: The number of missing values for the specific variable.
+                                example: 0
+                              min:
+                                type: numeric
+                                description: The minimum value of the specific variable.
+                                example: 0.4
+                              max:
+                                type: numeric
+                                description: The maximum value of the specific variable.
+                                example: 20.6
+                              mean:
+                                type: numeric
+                                description: The mean value of the specific variable.
+                                example: 10.7
+                              std:
+                                type: numeric
+                                description: The standard deviation for the specific variable.
+                                example: 2.4
+                              variance:
+                                type: numeric
+                                description: The variance of the specific variable.
+                                example: 7.9
+                              contiguous:
+                                type: boolean
+                                description: Whether the data are contiguous or not.
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
@@ -792,42 +1395,155 @@ def profile_path_raster():
                         assetType:
                           type: string
                           description: The type of the asset (always *raster*).
-                        mbrStatic:
-                          type: string
-                          description: A PNG static map with the MBR, base64 encoded.
+                          example: raster
                         info:
                           type: object
-                          description: A JSON with general information about the raster file (such as metadata, image structure, etc.).
+                          description: General information about the raster file.
+                          properties:
+                            metadata:
+                              type: object
+                              description: Metadata of the the raster as written in the file. The keys are free-text.
+                              additionalProperties:
+                                type: string
+                              example:
+                                AREA_OR_POINT: Point
+                                TIFFTAG_MAXSAMPLEVALUE: 254
+                            imageStructure:
+                              type: object
+                              description: Various values describing the image structure. The keys depend on the raster.
+                              additionalProperties:
+                                type: string
+                              example:
+                                COMPRESSION: YCbCr JPEG
+                                INTERLEAVE: PIXEL
+                                SOURCE_COLOR_SPACE: YCbCr
+                            driver:
+                              type: string
+                              description: The driver used to open the raster.
+                              example: GeoTIFF
+                            files:
+                              type: array
+                              description: A list of the files associated with the raster.
+                              items:
+                                type: string
+                                description: Filename.
+                              example:
+                                - example.tif
+                            width:
+                              type: integer
+                              description: The width in pixels.
+                              example: 1920
+                            height:
+                              type: integer
+                              description: The height in pixels.
+                              example: 1080
+                            bands:
+                              type: array
+                              description: A list with the bands included in the raster.
+                              items:
+                                type: string
+                                description: The name of the band.
+                              example:
+                                - RED
                         statistics:
-                          type: object
-                          description: A list with the statistics for each band of the raster file.
+                          type: array
+                          description: A list with descriptive statistics for each band of the raster file.
+                          items:
+                            type: object
+                            description: Descriptive statistics for the n-th band.
+                            properties:
+                              min:
+                                type: numeric
+                                description: The minimun value in the band.
+                                example: 0.0
+                              max:
+                                type: numeric
+                                description: The maximum value in the band.
+                                example: 255.0
+                              mean:
+                                type: numeric
+                                description: The mean value in the band.
+                                example: 180.5475
+                              std:
+                                type: numeric
+                                description: The standard deviation in the band.
+                                example: 46.4463
                         histogram:
-                          type: object
-                          description: The default histogram of the raster file for each band.
+                          type: array
+                          description: The default histogram of the raster for each band.
+                          items:
+                            type: array
+                            description: The default histogram of the n-th band. It contains the minimum and the maximum Pixel Value, the total number of pixel values, and an array with the frequencies for each Pixel Value.
+                            items:
+                              anyOf:
+                                -
+                                  type: numeric
+                                  description: The minimum Pixel Value.
+                                -
+                                  type: numeric
+                                  description: The maximum Pixel Value.
+                                -
+                                  type: integer
+                                  description: The total number of pixel values.
+                                -
+                                  type: array
+                                  description: An array with the frequencies for each Pixel Value (has lentgh equal to the total number of Pixel Values).
+                          example: [-0.5, 255.5, 256, [2513898, 31982, 11152, 26086, 12858]]
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
+                        mbrStatic:
+                          type: string
+                          description: A PNG static map with the MBR, base64 encoded.
                         resolution:
                           type: object
-                          description: The resolution for each dimension, and the unit of measurement.
+                          description: The resolution for each axis, and the unit of measurement.
+                          properties:
+                            x:
+                              type: numeric
+                              description: Resolution in x-axis.
+                              example: 0.16726222
+                            y:
+                              type: numeric
+                              description: Resolution in y-axis.
+                              example: 0.16726222
+                            unit:
+                              type: string
+                              description: The unit of resolution.
+                              example: metre
                         cog:
                           type: boolean
-                          description: If raster is GeoTiff, whether it is Cloud-Optimized or not.
+                          description: In case the raster is GeoTiff, whether it is Cloud-Optimized or not.
                         numberOfBands:
                           type: integer
                           description: The number of bands in the raster.
+                          example: 1
                         datatypes:
-                          type: object
-                          description: The data type for each band.
+                          type: array
+                          description: The data type of each band.
+                          items:
+                            type: string
+                            description: The data type of the n-th band.
+                            example: Byte
                         noDataValue:
-                          type: object
-                          description: The no-data value for each band.
+                          type: array
+                          description: The no-data value of each band.
+                          items:
+                            type: numeric
+                            description: The no-data value of the n-th band.
+                            example: null
                         crs:
                           type: string
                           description: The short name of the dataset's native Coordinate Reference System (CRS).
+                          example: EPSG:4326
                         colorInterpretation:
-                          type: object
+                          type: array
                           description: The Color Interpretation for each band.
+                          items:
+                            type: string
+                            description: The color interpretation for the n-th band.
+                            example: RED
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
@@ -940,21 +1656,29 @@ def profile_path_vector():
                         assetType:
                           type: string
                           description: One of *tabular* or *vector*.
+                          example: vector
                         mbr:
                           type: string
                           description: The Well-Known-Text representation of the Minimum Bounding Rectangle (MBR).
+                          example: POLYGON ((6.5206 49.4439, 6.5206 50.1845, 5.73398 50.1845, 5.73398 49.4439, 6.5206 49.4439))
                         mbrStatic:
                           type: string
                           description: A PNG static map with the MBR, base64 encoded.
                         featureCount:
                           type: integer
                           description: The number of features in the dataset.
+                          example: 23432
                         count:
                           type: object
-                          description: Count not null values for each attribute in the dataset.
+                          description: Count not null values for each attribute in the dataset. The key is the attribute name.
+                          additionalProperties:
+                            type: integer
+                            description: The not null values for the specific attribute.
+                            example: 2334
                         convexHull:
                           type: string
                           description: The Well-Known-Text representation of the Convex Hull for all geometries.
+                          example: POLYGON ((6.35585 49.4439, 5.73602 49.8337, 6.36222 49.4469, 6.35691 49.4439, 6.35585 49.4439))
                         convexHullStatic:
                           type: string
                           description: A PNG static map showing the convex hull, base64 encoded.
@@ -964,39 +1688,311 @@ def profile_path_vector():
                         crs:
                           type: string
                           description: The short name of the dataset's native Coordinate Reference System (CRS).
+                          example: EPSG:4326
                         attributes:
-                          type: object
-                          description: A list with the attributes of the dataset.
+                          type: array
+                          description: A list with all attributes of the dataset.
+                          items:
+                            type: string
+                            description: The attribute name.
+                          example:
+                            - attributeName1
+                            - attributeName2
+                            - attributeName3
                         datatypes:
                           type: object
-                          description: The datatypes for each of the dataset's attributes.
+                          description: The datatypes for each of the dataset's attributes. The key is the attribute name.
+                          additionalProperties:
+                            type: string
+                            description: The datatype of the specific attribute.
+                            examples:
+                              - str
+                              - int64
+                              - float64
                         distribution:
                           type: object
-                          description: The distribution of the values for each attribute in the dataset.
+                          description: The distribution of the values for each *categorical* attribute in the dataset. The key is the attribute name.
+                          additionalProperties:
+                            type: object
+                            description: The frequency of each value for the specific attribute. The key is the value.
+                            additionalProperties:
+                              type: integer
+                              description: The frequency of the specific value in the attribute.
+                              example: 244
+                          example:
+                            categoricalAttr1:
+                              value1: 632
+                              value2: 432
+                              value3: 332
+                            categoricalAttr2:
+                              value4: 434
+                              value5: 232
+                              value6: 134
                         quantiles:
                           type: object
                           description: The 5, 25, 50, 75, 95 quantiles for each of the numeric attributes in the dataset.
+                          properties:
+                            5:
+                              type: object
+                              description: The value of the 5-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 5-quantile value for the specific attribute.
+                                example: 0.3
+                            25:
+                              type: object
+                              description: The value of the 25-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 25-quantile value for the specific attribute.
+                                example: 0.4
+                            50:
+                              type: object
+                              description: The value of the 50-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 50-quantile value for the specific attribute.
+                                example: 0.43
+                            75:
+                              type: object
+                              description: The value of the 75-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 75-quantile value for the specific attribute.
+                                example: 0.45
+                            95:
+                              type: object
+                              description: The value of the 95-quantile for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                                description: The 95-quantile value for the specific attribute.
+                                example: 0.48
                         distinct:
                           type: object
-                          description: The distinct values for each of the attributes in the dataset.
+                          description: The distinct values for each of the *categorical* attributes in the dataset. The key is the attribute name.
+                          example:
+                            categoricalAttr1:
+                              - TRANSPORT
+                              - SETTLEMENTS
+                              - BUSINESS
+                            categoricalAttr2:
+                              - LU
+                              - DE
+                              - GR
+                          additionalProperties:
+                            type: array
+                            description: A list with the distinct values for the specific attribute.
+                            items:
+                              type: string
                         recurring:
                           type: object
                           description: The most frequent values for each of the attributes in the dataset.
                         heatmap:
                           type: object
                           description: A GeoJSON with a heatmap of the geometries.
+                          properties:
+                            type:
+                              type: string
+                              example: FeatureCollection
+                            features:
+                              type: array
+                              minItems: 0
+                              description: Each feature represents a contour plot.
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  type:
+                                    type: string
+                                    example: Feature
+                                  properties:
+                                    type: object
+                                    description: Style properties for the plot.
+                                    properties:
+                                      fill:
+                                        type: string
+                                        description: The hex color code for the fill.
+                                        example: "#002ed1"
+                                      fill-opacity:
+                                        type: numeric
+                                        description: The opacity for the fill color (0-1).
+                                        example: 0.4
+                                      stroke:
+                                        type: string
+                                        description: The hex color code for the stroke.
+                                        example: "#002ed1"
+                                      stroke-opacity:
+                                        type: numeric
+                                        description: The opacity for the stroke (0-1).
+                                        example: 1
+                                      stroke-width:
+                                        type: numeric
+                                        description: The width (in pixels) of the stroke.
+                                        example: 1
+                                      title:
+                                        type: string
+                                        description: The title for the specific contour.
+                                        example: 0.00-1.50
+                                  geometry:
+                                    type: object
+                                    description: The geometry of the contour.
+                                    properties:
+                                      type:
+                                        type: string
+                                        description: The geometry type.
+                                        example: MultiPolygon
+                                      coordinates:
+                                        type: array
+                                        description: The coordinates of the geometry
+                                        minItems: 1
+                                        items:
+                                          type: array
+                                          minItems: 1
+                                          items:
+                                            type: array
+                                            minItems: 4
+                                            example:
+                                              -
+                                                - 19.512540
+                                                - 0.002680
+                                              -
+                                                - 19.512542
+                                                - 0.002677
+                                              -
+                                                - 19.512545
+                                                - 0.002671
+                                              -
+                                                - 19.512540
+                                                - 0.002680
+                                            items:
+                                              type: array
+                                              minItems: 2
+                                              maxItems: 2
+                                              items:
+                                                type: numeric
                         heatmapStatic:
                           type: string
                           description: A PNG static heatmap, base64 encoded.
                         clusters:
                           type: object
-                          description: A GeoJSON with clustered geometries.
+                          description: A GeoJSON containing the clustered geometries.
+                          properties:
+                            type:
+                              type: string
+                              example: FeatureCollection
+                            features:
+                              type: array
+                              minItems: 0
+                              description: Each feature represents one cluster.
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  type:
+                                    type: string
+                                    example: Feature
+                                  properties:
+                                    type: object
+                                    description: Additional properties of the cluster.
+                                    properties:
+                                      cluster_id:
+                                        type: integer
+                                        description: The cluster id.
+                                      size:
+                                        type: integer
+                                        description: The size of the cluster; how many geometries the cluster contains.
+                                        example: 420
+                                  geometry:
+                                    type: object
+                                    description: The geometry of the cluster.
+                                    properties:
+                                      type:
+                                        type: string
+                                        description: The geometry type.
+                                        example: Polygon
+                                      coordinates:
+                                        type: array
+                                        description: The coordinates of the geometry
+                                        minItems: 1
+                                        items:
+                                          type: array
+                                          minItems: 4
+                                          example:
+                                            -
+                                              - 5.92139730
+                                              - 49.7208867
+                                            -
+                                              - 6.92140223
+                                              - 49.7208946
+                                            -
+                                              - 6.92143543
+                                              - 49.7202454
+                                            -
+                                              - 5.92139730
+                                              - 49.7208867
+                                          items:
+                                            type: array
+                                            minItems: 2
+                                            maxItems: 2
+                                            items:
+                                              type: numeric
                         clustersStatic:
                           type: string
                           description: A PNG static map with the clustered geometries, base64 encoded.
                         statistics:
                           type: object
-                          description: Statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
+                          description: Descriptive statistics (*min*, *max*, *mean*, *median*, *std*, *sum*) for the numerical attributes in the dataset.
+                          properties:
+                            min:
+                              type: object
+                              description: The *minimum* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 0.4
+                                attr2: 0.2
+                            max:
+                              type: object
+                              description: The *maximum* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 10.1
+                                attr2: 8.7
+                            mean:
+                              type: object
+                              description: The *mean* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 5.2
+                                attr2: 4.6
+                            median:
+                              type: object
+                              description: The *median* value for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 5.3
+                                attr2: 4.5
+                            std:
+                              type: object
+                              description: The *standard deviation* for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 0.8
+                                attr2: 0.6
+                            sum:
+                              type: object
+                              description: The *sum* of of all values for each of the numeric attributes. The key is the attribute name.
+                              additionalProperties:
+                                type: numeric
+                              example:
+                                attr1: 123.3
+                                attr2: 96.3
             202:
               description: Accepted for processing, but profile has not been completed.
               content:
