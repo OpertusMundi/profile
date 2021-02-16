@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 import json
+from enum import Enum, auto
+
 from flask import Flask, abort
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
@@ -10,8 +12,9 @@ from flask import make_response, send_file
 from flask_wtf import FlaskForm
 
 from . import db
-from .forms import ProfileFileForm, ProfilePathForm
+from .forms import ProfileFileForm, ProfilePathForm, NormalizeForm
 from .logging import getLoggers
+from .normalize.utils import get_geodataframe, normalize_gdf, store_gdf
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
     get_temp_dir, get_resized_report, get_ds, uncompress_file
 
@@ -22,6 +25,9 @@ class OutputDirNotSet(Exception):
 
 if getenv('OUTPUT_DIR') is None:
     raise OutputDirNotSet('Environment variable OUTPUT_DIR is not set.')
+
+
+FILE_NOT_FOUND_MESSAGE = "File not found"
 
 # Logging
 mainLogger, accountLogger = getLoggers()
@@ -42,21 +48,34 @@ spec = APISpec(
 
 # Initialize app
 app = Flask(__name__, instance_relative_config=True, instance_path=getenv('INSTANCE_PATH'))
+environment = getenv('FLASK_ENV')
+if environment == 'testing' or environment == 'development':
+    secret_key = environment
+else:
+    secret_key = getenv('SECRET_KEY') or open(getenv('SECRET_KEY_FILE')).read()
 app.config.from_mapping(
-    SECRET_KEY=getenv('SECRET_KEY'),
+    SECRET_KEY=secret_key,
     DATABASE=getenv('DATABASE'),
 )
 
 
 def executor_callback(future):
     """The callback function called when a job has completed."""
-    ticket, result, success, comment = future.result()
+    ticket, result, job_type, success, comment = future.result()
     if result is not None:
         rel_path = datetime.now().strftime("%y%m%d")
         rel_path = path.join(rel_path, ticket)
-        mkdir(path.join(getenv('OUTPUT_DIR'), rel_path))
-        filepath = path.join(getenv('OUTPUT_DIR'), rel_path, "result.json")
-        result.to_file(filepath)
+        output_path: str = path.join(getenv('OUTPUT_DIR'), rel_path)
+        mkdir(output_path)
+        filepath = None
+        if job_type is JobType.PROFILE:
+            filepath = path.join(getenv('OUTPUT_DIR'), rel_path, "result.json")
+            result.to_file(filepath)
+        elif job_type is JobType.NORMALIZE:
+            gdf, resource_type, file_name = result
+            filepath = store_gdf(gdf, resource_type, file_name, output_path)
+        elif job_type is JobType.SUMMARIZE:
+            filepath = None
     else:
         filepath = None
     with app.app_context():
@@ -89,9 +108,15 @@ if getenv('CORS') is not None:
     cors = CORS(app, origins=origins)
 
 
+class JobType(Enum):
+    NORMALIZE = auto()
+    PROFILE = auto()
+    SUMMARIZE = auto()
+
+
 @executor.job
-def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tuple:
-    """Enqueue a profile job (in case requested response type is 'deferred')."""
+def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_type: JobType) -> tuple:
+    """Enqueue a job (in case requested response type is 'deferred')."""
     filesize = stat(src_path).st_size
     dbc = db.get_db()
     dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
@@ -99,21 +124,30 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm) -> tupl
     dbc.close()
     mainLogger.info(f'Starting processing ticket: {ticket}')
     try:
-        result = {}
-        if file_type == 'netcdf':
-            ds = get_ds(src_path, form, 'netcdf')
-            result = get_resized_report(ds, form, 'netcdf')
-        elif file_type == 'raster':
-            ds = get_ds(src_path, form, 'raster')
-            result = get_resized_report(ds, form, 'raster')
-        elif file_type == 'vector':
-            ds = get_ds(src_path, form, 'vector')
-            result = get_resized_report(ds, form, 'vector')
+        result = None
+        if job_type is JobType.PROFILE:
+            result = {}
+            if file_type == 'netcdf':
+                ds = get_ds(src_path, form, 'netcdf')
+                result = get_resized_report(ds, form, 'netcdf')
+            elif file_type == 'raster':
+                ds = get_ds(src_path, form, 'raster')
+                result = get_resized_report(ds, form, 'raster')
+            elif file_type == 'vector':
+                ds = get_ds(src_path, form, 'vector')
+                result = get_resized_report(ds, form, 'vector')
+        elif job_type is JobType.NORMALIZE:
+            gdf = get_geodataframe(form, src_path)
+            gdf = normalize_gdf(form, gdf)
+            file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
+            result = gdf, form.resource_type.data, file_name
+        elif job_type is JobType.SUMMARIZE:
+            result = None
     except Exception as e:
         mainLogger.error(f'Processing of ticket: {ticket} failed')
         return ticket, None, 0, str(e)
     else:
-        return ticket, result, 1, None
+        return ticket, result, job_type, 1, None
 
 
 @app.route("/")
@@ -421,7 +455,7 @@ def profile_file_netcdf():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -651,7 +685,7 @@ def profile_file_raster():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, file_type="raster", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="raster", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -1100,7 +1134,7 @@ def profile_file_vector():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, file_type="vector", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -1343,7 +1377,7 @@ def profile_path_netcdf():
     src_file_path: str = form.resource.data
 
     if not path.exists(src_file_path):
-        abort(400, 'File not found')
+        abort(400, FILE_NOT_FOUND_MESSAGE)
 
     # Immediate results
     if form.response.data == "prompt":
@@ -1353,7 +1387,7 @@ def profile_path_netcdf():
     # Wait for results
     else:
         ticket: str = create_ticket()
-        enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -1575,7 +1609,7 @@ def profile_path_raster():
     src_file_path: str = form.resource.data
 
     if not path.exists(src_file_path):
-        abort(400, 'File not found')
+        abort(400, FILE_NOT_FOUND_MESSAGE)
 
     # Wait for results
     if form.response.data == "prompt":
@@ -1585,7 +1619,7 @@ def profile_path_raster():
     # Wait for results
     else:
         ticket: str = create_ticket()
-        enqueue.submit(ticket, src_file_path, file_type="raster", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="raster", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -2024,7 +2058,7 @@ def profile_path_vector():
     src_file_path: str = form.resource.data
 
     if not path.exists(src_file_path):
-        abort(400, 'File not found')
+        abort(400, FILE_NOT_FOUND_MESSAGE)
 
     src_file_path = uncompress_file(src_file_path)
 
@@ -2036,7 +2070,32 @@ def profile_path_vector():
     # Wait for results
     else:
         ticket: str = create_ticket()
-        enqueue.submit(ticket, src_file_path, file_type="vector", form=form)
+        enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.PROFILE)
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
+
+
+@app.route("/normalize", methods=["POST"])
+def normalize():
+    """Normalize"""
+    form = NormalizeForm()
+    validate_form(form, mainLogger)
+    tmp_dir: str = get_tmp_dir("normalize")
+    ticket: str = create_ticket()
+    src_path: str = path.join(tmp_dir, 'src', ticket)
+    src_file_path: str = save_to_temp(form, src_path, ticket)
+
+    # Immediate results
+    if form.response.data == "prompt":
+        gdf = get_geodataframe(form, src_file_path)
+        gdf = normalize_gdf(form, gdf)
+        file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
+        output_file = store_gdf(gdf, form.resource_type.data, file_name, src_path)
+        file_content = open(output_file, 'rb')
+        return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
+    # Wait for results
+    else:
+        enqueue.submit(ticket, src_file_path, form)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -2151,5 +2210,6 @@ with app.test_request_context():
     spec.path(view=profile_path_netcdf)
     spec.path(view=profile_path_raster)
     spec.path(view=profile_path_vector)
+    spec.path(view=normalize)
     spec.path(view=status)
     spec.path(view=resource)

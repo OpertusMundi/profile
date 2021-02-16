@@ -4,3 +4,9 @@ Flask-Executor==0.9.4
 Flask-Cors==3.0.10
 apispec>=4.0.0,<4.1.0
 apispec-webframeworks>=0.5.2,<0.5.3
+# normalize
+nltk==3.5
+polyglot==16.7.4
+numpy>=1.17.4,<1.18.5
+transliterate==1.10.2
+Morfessor==2.0.6
