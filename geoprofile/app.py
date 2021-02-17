@@ -12,7 +12,7 @@ from flask import make_response, send_file
 from flask_wtf import FlaskForm
 
 from . import db
-from .forms import ProfileFileForm, ProfilePathForm, NormalizeForm
+from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm
 from .logging import getLoggers
 from .normalize.utils import get_geodataframe, normalize_gdf, store_gdf
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
@@ -1157,7 +1157,7 @@ def profile_path_netcdf():
                     resource:
                       type: string
                       format: binary
-                      description: The spatial file.
+                      description: The spatial file's.
                     response:
                       type: string
                       enum: [prompt, deferred]
@@ -1410,7 +1410,7 @@ def profile_path_raster():
                     resource:
                       type: string
                       format: binary
-                      description: The spatial file.
+                      description: The spatial file's path.
                     response:
                       type: string
                       enum: [prompt, deferred]
@@ -1642,7 +1642,7 @@ def profile_path_vector():
                     resource:
                       type: string
                       format: binary
-                      description: The spatial file.
+                      description: The spatial file's path.
                     response:
                       type: string
                       enum: [prompt, deferred]
@@ -2075,16 +2075,7 @@ def profile_path_vector():
         return make_response(response, 202)
 
 
-@app.route("/normalize", methods=["POST"])
-def normalize():
-    """Normalize"""
-    form = NormalizeForm()
-    validate_form(form, mainLogger)
-    tmp_dir: str = get_tmp_dir("normalize")
-    ticket: str = create_ticket()
-    src_path: str = path.join(tmp_dir, 'src', ticket)
-    src_file_path: str = save_to_temp(form, src_path, ticket)
-
+def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, src_path: str):
     # Immediate results
     if form.response.data == "prompt":
         gdf = get_geodataframe(form, src_file_path)
@@ -2095,9 +2086,243 @@ def normalize():
         return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, form)
+        enqueue.submit(ticket, src_file_path, form, form=form, job_type=JobType.NORMALIZE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
+
+
+@app.route("/normalize/file", methods=["POST"])
+def normalize_file():
+    """Normalize a vector or tabular file that its provided with the request
+        ---
+        post:
+          summary: Profile a vector file that is provided with the request
+          tags:
+            - Normalize
+          requestBody:
+            required: true
+            content:
+               multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    resource_type:
+                      type: string
+                      enum: [csv, shp]
+                      description: The file type of the resource
+                    csv_delimiter:
+                      type: string
+                      default: The program will try to detect it automatically
+                      description: The csv file's delimiter if applicable
+                    crs:
+                      type: string
+                      description: The dataset's crs
+                    date_normalization:
+                      type: list
+                      description: The names of the columns to perform date normalization
+                    phone_normalization:
+                      type: list
+                      description: The names of the columns to perform phone normalization
+                    special_character_normalization:
+                      type: list
+                      description: The names of the columns to perform special character normalization
+                    alphabetical_normalization:
+                      type: list
+                      description: The names of the columns to perform alphabetical normalization
+                    case_normalization:
+                      type: list
+                      description: The names of the columns to perform case normalization
+                    transliteration:
+                      type: list
+                      description:  The names of the columns to perform transliteration
+                    transliteration_langs:
+                      type: list
+                      description: The languages contained in the column we want to transliterate
+                    transliteration_lang:
+                      type: string
+                      description: The language contained in the column we want to transliterate
+                    value_cleaning:
+                      type: list
+                      description: The names of the columns to perform value cleaning
+                    wkt_normalization:
+                      type: boolean
+                      description: Whether to perform wkt normalization or not
+                    column_name_normalization:
+                      type: boolean
+                      description: Whether to perform column name normalization or not
+                  required:
+                    - resource
+                    - resource_type
+          responses:
+            200:
+              description: The input file with all the specidied normalizations applied.
+              content:
+                oneOf:
+                  - application/csv:
+                      schema:
+                        type: object
+                  - application/zip:
+                      schema:
+                        type: object
+            202:
+              description: Accepted for processing, but normalization has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
+    form = NormalizeFileForm()
+    validate_form(form, mainLogger)
+    tmp_dir: str = get_tmp_dir("normalize")
+    ticket: str = create_ticket()
+    src_path: str = path.join(tmp_dir, 'src', ticket)
+    src_file_path: str = save_to_temp(form, src_path, ticket)
+    return normalize_endpoint(form, src_file_path, ticket, src_path)
+
+
+@app.route("/normalize/path", methods=["POST"])
+def normalize_path():
+    """Normalize a vector or tabular file that its path is provided with the request
+        ---
+        post:
+          summary: Profile a vector file that its path is provided with the request
+          tags:
+            - Normalize
+          requestBody:
+            required: true
+            content:
+               multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file's path.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    resource_type:
+                      type: string
+                      enum: [csv, shp]
+                      description: The file type of the resource
+                    csv_delimiter:
+                      type: string
+                      default: The program will try to detect it automatically
+                      description: The csv file's delimiter if applicable
+                    crs:
+                      type: string
+                      description: The dataset's crs
+                    date_normalization:
+                      type: list
+                      description: The names of the columns to perform date normalization
+                    phone_normalization:
+                      type: list
+                      description: The names of the columns to perform phone normalization
+                    special_character_normalization:
+                      type: list
+                      description: The names of the columns to perform special character normalization
+                    alphabetical_normalization:
+                      type: list
+                      description: The names of the columns to perform alphabetical normalization
+                    case_normalization:
+                      type: list
+                      description: The names of the columns to perform case normalization
+                    transliteration:
+                      type: list
+                      description:  The names of the columns to perform transliteration
+                    transliteration_langs:
+                      type: list
+                      description: The languages contained in the column we want to transliterate
+                    transliteration_lang:
+                      type: string
+                      description: The language contained in the column we want to transliterate
+                    value_cleaning:
+                      type: list
+                      description: The names of the columns to perform value cleaning
+                    wkt_normalization:
+                      type: boolean
+                      description: Whether to perform wkt normalization or not
+                    column_name_normalization:
+                      type: boolean
+                      description: Whether to perform column name normalization or not
+                  required:
+                    - resource
+                    - resource_type
+          responses:
+            200:
+              description: The input file with all the specidied normalizations applied.
+              content:
+                oneOf:
+                  - application/csv:
+                      schema:
+                        type: object
+                  - application/zip:
+                      schema:
+                        type: object
+            202:
+              description: Accepted for processing, but normalization has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
+    form = NormalizePathForm()
+    validate_form(form, mainLogger)
+    src_file_path: str = form.resource.data
+    if not path.exists(src_file_path):
+        abort(400, FILE_NOT_FOUND_MESSAGE)
+    tmp_dir: str = get_tmp_dir("normalize")
+    ticket: str = create_ticket()
+    src_path: str = path.join(tmp_dir, 'src', ticket)
+    return normalize_endpoint(form, src_file_path, ticket, src_path)
 
 
 @app.route("/status/<ticket>")
@@ -2210,6 +2435,7 @@ with app.test_request_context():
     spec.path(view=profile_path_netcdf)
     spec.path(view=profile_path_raster)
     spec.path(view=profile_path_vector)
-    spec.path(view=normalize)
+    spec.path(view=normalize_file)
+    spec.path(view=normalize_path)
     spec.path(view=status)
     spec.path(view=resource)

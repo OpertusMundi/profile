@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import FileField, StringField, FloatField, IntegerField, FieldList
+from wtforms import FileField, StringField, FloatField, IntegerField, FieldList, BooleanField
 from wtforms.validators import DataRequired, AnyOf, Optional
 import contextily as ctx
 
@@ -43,8 +43,7 @@ class ProfilePathForm(BaseProfileForm):
     resource = StringField('resource', validators=[DataRequired()])
 
 
-class NormalizeForm(FlaskForm):
-    resource = FileField('resource', validators=[DataRequired()])
+class BaseNormalizeForm(FlaskForm):
     resource_type = StringField('resource_type', validators=[DataRequired(),
                                                              AnyOf(['csv', 'shp'],
                                                                    "Permitted values for resource_type are csv or shp")])
@@ -72,10 +71,16 @@ class NormalizeForm(FlaskForm):
     transliteration_lang = StringField('transliteration_lang', validators=[Optional()], default='')
     value_cleaning = FieldList(StringField('value_cleaning', validators=[Optional()], default=[]),
                                min_entries=0, validators=[Optional()])
-    wkt_normalization = FieldList(StringField('wkt_normalization', validators=[Optional()], default=[]),
-                                  min_entries=0, validators=[Optional()])
-    column_name_normalization = FieldList(StringField('column_name_normalization', validators=[Optional()], default=[]),
-                                          min_entries=0, validators=[Optional()])
+    wkt_normalization = BooleanField('wkt_normalization', validators=[Optional()])
+    column_name_normalization = BooleanField('column_name_normalization', validators=[Optional()])
 
     class Meta:
         csrf = False
+
+
+class NormalizeFileForm(BaseNormalizeForm):
+    resource = FileField('resource', validators=[DataRequired()])
+
+
+class NormalizePathForm(BaseNormalizeForm):
+    resource = StringField('resource', validators=[DataRequired()])

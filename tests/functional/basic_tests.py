@@ -229,7 +229,7 @@ def test_normalization_functions():
 def test_normalize_transliterate_csv_file_input_prompt():
     payload = {'resource_type': 'csv', "transliteration-0": 'name',
                'transliteration_lang': 'el', 'resource': (open(corfu_csv_path, 'rb'), 'sample.csv')}
-    path_to_test = '/normalize'
+    path_to_test = '/normalize/file'
     with app.test_client() as client:
         res = client.post(path_to_test, data=payload, content_type='multipart/form-data')
         assert res.status_code in [200, 202]
@@ -241,6 +241,6 @@ def test_normalize_transliterate_csv_file_input_prompt():
 
 def test_normalize_csv_file_input_deferred():
     data = {'resource': (open(corfu_csv_path, 'rb'), 'sample.csv'), 'response': 'deferred', 'resource_type': 'csv'}
-    path_to_test = '/normalize'
+    path_to_test = '/normalize/file'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
