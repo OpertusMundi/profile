@@ -79,6 +79,50 @@ Parameters (x-www-form-urlencoded):
 * `geometry (Optional, default="wkt")` The column name containing the geometry information
 
 
+### Normalization with file input
+* `/normalize/file` Normalize a vector or tabular file that is provided with the request 
+
+Parameters (form-data):
+* `resource (Required)` The given file
+* `resource_type (Required)` The resource type either csv or shp
+* `response (Optional, default="prompt")` (see below)
+* `csv_delimiter (Optional, default=automated)` The delimiter of the provided csv file
+* `crs (Optional)` The crs
+* `date_normalization (Optional)` The names of the columns to perform date normalization
+* `phone_normalization (Optional)` The names of the columns to perform phone normalization
+* `special_character_normalization (Optional)`  The names of the columns to perform special character normalization
+* `alphabetical_normalization (Optional)` The names of the columns to perform alphabetical normalization
+* `case_normalization (Optional)` The names of the columns to perform case normalization
+* `transliteration (Optional)` The names of the columns to perform transliteration
+* `transliteration_langs (Optional)` The languages contained in the column we want to transliterate
+* `transliteration_lang (Optional)`  The language contained in the column we want to transliterate
+* `value_cleaning (Optional)`The names of the columns to perform value cleaning
+* `wkt_normalization (Optional)` Whether to perform wkt normalization or not
+* `column_name_normalization (Optional)` Whether to perform column name normalization or not
+
+
+### Normalization with path input
+* `/normalize/path` Normalize a vector or tabular file that its path is provided with the request
+
+Parameters (x-www-form-urlencoded):
+* `resource (Required)` The file's path
+* `resource_type (Required)` The resource type either csv or shp
+* `response (Optional, default="prompt")` (see below)
+* `csv_delimiter (Optional, default=automated)` The delimiter of the provided csv file
+* `crs (Optional)` The crs
+* `date_normalization (Optional)` The names of the columns to perform date normalization
+* `phone_normalization (Optional)` The names of the columns to perform phone normalization
+* `special_character_normalization (Optional)`  The names of the columns to perform special character normalization
+* `alphabetical_normalization (Optional)` The names of the columns to perform alphabetical normalization
+* `case_normalization (Optional)` The names of the columns to perform case normalization
+* `transliteration (Optional)` The names of the columns to perform transliteration
+* `transliteration_langs (Optional)` The languages contained in the column we want to transliterate
+* `transliteration_lang (Optional)`  The language contained in the column we want to transliterate
+* `value_cleaning (Optional)`The names of the columns to perform value cleaning
+* `wkt_normalization (Optional)` Whether to perform wkt normalization or not
+* `column_name_normalization (Optional)` Whether to perform column name normalization or not
+
+
 ### Deferred processing support
 * `/status/<ticket>` Get the status of a specific ticket
 * `/resource/<ticket>` Get the resulted resource associated with a specific ticket
