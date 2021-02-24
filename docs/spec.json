@@ -165,7 +165,7 @@
                         "description": "Client error."
                     }
                 },
-                "summary": "Profile a vector file that is provided with the request",
+                "summary": "Normalize a vector file that is provided with the request",
                 "tags": [
                     "Normalize"
                 ]
@@ -323,7 +323,7 @@
                         "description": "Client error."
                     }
                 },
-                "summary": "Profile a vector file that its path is provided with the request",
+                "summary": "Normalize a vector file that its path is provided with the request",
                 "tags": [
                     "Normalize"
                 ]
