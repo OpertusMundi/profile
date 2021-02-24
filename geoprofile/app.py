@@ -2096,7 +2096,7 @@ def normalize_file():
     """Normalize a vector or tabular file that its provided with the request
         ---
         post:
-          summary: Profile a vector file that is provided with the request
+          summary: Normalize a vector file that is provided with the request
           tags:
             - Normalize
           requestBody:
@@ -2212,7 +2212,7 @@ def normalize_path():
     """Normalize a vector or tabular file that its path is provided with the request
         ---
         post:
-          summary: Profile a vector file that its path is provided with the request
+          summary: Normalize a vector file that its path is provided with the request
           tags:
             - Normalize
           requestBody:
