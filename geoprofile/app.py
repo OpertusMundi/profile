@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 import json
 from enum import Enum, auto
-
-from flask import Flask, abort
+from flask import Flask, abort, jsonify
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
 from os import path, getenv, stat
@@ -10,11 +9,14 @@ from flask_cors import CORS
 from flask_executor import Executor
 from flask import make_response, send_file
 from flask_wtf import FlaskForm
+import pandas as pd
 
 from . import db
-from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm
+from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm, SummarizeFileForm, \
+    SummarizePathForm
 from .logging import getLoggers
 from .normalize.utils import get_geodataframe, normalize_gdf, store_gdf
+from .summarize.summarization import summarize
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
     get_temp_dir, get_resized_report, get_ds, uncompress_file
 
@@ -75,7 +77,9 @@ def executor_callback(future):
             gdf, resource_type, file_name = result
             filepath = store_gdf(gdf, resource_type, file_name, output_path)
         elif job_type is JobType.SUMMARIZE:
-            filepath = None
+            filepath = path.join(getenv('OUTPUT_DIR'), rel_path, "result.json")
+            with open(filepath, 'w') as fp:
+                json.dump(result, fp)
     else:
         filepath = None
     with app.app_context():
@@ -142,7 +146,10 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
             file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
             result = gdf, form.resource_type.data, file_name
         elif job_type is JobType.SUMMARIZE:
-            result = None
+            gdf = get_geodataframe(form, src_path).to_geopandas_df()
+            df = pd.DataFrame(gdf.drop(columns='geometry'))
+            json_summary = summarize(df, form)
+            result = json_summary
     except Exception as e:
         mainLogger.error(f'Processing of ticket: {ticket} failed')
         return ticket, None, 0, str(e)
@@ -2323,6 +2330,42 @@ def normalize_path():
     ticket: str = create_ticket()
     src_path: str = path.join(tmp_dir, 'src', ticket)
     return normalize_endpoint(form, src_file_path, ticket, src_path)
+
+
+def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str):
+    # Immediate results
+    if form.response.data == "prompt":
+        gdf = get_geodataframe(form, src_file_path).to_geopandas_df()
+        df = pd.DataFrame(gdf.drop(columns='geometry'))
+        json_summary = summarize(df, form)
+        return jsonify(json_summary)
+    # Wait for results
+    else:
+        enqueue.submit(ticket, src_file_path, form, form=form, job_type=JobType.SUMMARIZE)
+        response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
+        return make_response(response, 202)
+
+
+@app.route("/summarize/file", methods=["POST"])
+def summarize_file():
+    form = SummarizeFileForm()
+    validate_form(form, mainLogger)
+    tmp_dir: str = get_tmp_dir("summarize")
+    ticket: str = create_ticket()
+    src_path: str = path.join(tmp_dir, 'src', ticket)
+    src_file_path: str = save_to_temp(form, src_path, ticket)
+    return summarize_endpoint(form, src_file_path, ticket)
+
+
+@app.route("/summarize/path", methods=["POST"])
+def summarize_path():
+    form = SummarizePathForm()
+    validate_form(form, mainLogger)
+    src_file_path: str = form.resource.data
+    if not path.exists(src_file_path):
+        abort(400, FILE_NOT_FOUND_MESSAGE)
+    ticket: str = create_ticket()
+    return summarize_endpoint(form, src_file_path, ticket)
 
 
 @app.route("/status/<ticket>")
