@@ -2171,7 +2171,7 @@ def normalize_file():
                     - resource_type
           responses:
             200:
-              description: The input file with all the specidied normalizations applied.
+              description: The input file with all the specified normalizations applied.
               content:
                 oneOf:
                   - application/csv:
@@ -2287,7 +2287,7 @@ def normalize_path():
                     - resource_type
           responses:
             200:
-              description: The input file with all the specidied normalizations applied.
+              description: The input file with all the specified normalizations applied.
               content:
                 oneOf:
                   - application/csv:
@@ -2335,9 +2335,8 @@ def normalize_path():
 def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str):
     # Immediate results
     if form.response.data == "prompt":
-        gdf = get_geodataframe(form, src_file_path).to_geopandas_df()
-        df = pd.DataFrame(gdf.drop(columns='geometry'))
-        json_summary = summarize(df, form)
+        gdf = get_geodataframe(form, src_file_path)
+        json_summary = summarize(gdf, form)
         return jsonify(json_summary)
     # Wait for results
     else:
@@ -2348,6 +2347,110 @@ def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str):
 
 @app.route("/summarize/file", methods=["POST"])
 def summarize_file():
+    """Summarize a vector or tabular file that its provided with the request
+        ---
+        post:
+          summary: Summarize a vector or tabular file that its provided with the request
+          tags:
+            - Summarize
+          requestBody:
+            required: true
+            content:
+               multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      format: binary
+                      description: The spatial file.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    resource_type:
+                      type: string
+                      enum: [csv, shp]
+                      description: The file type of the resource
+                    csv_delimiter:
+                      type: string
+                      default: The program will try to detect it automatically
+                      description: The csv file's delimiter if applicable
+                    crs:
+                      type: string
+                      description: The dataset's crs
+
+                    sampling_method:
+                      type: string
+                      enum: [random, stratified, cluster]
+                      description: The sampling method to apply for the tabular data
+                    columns_to_sample:
+                      type: list
+                      description: The names of the columns to sample
+                    n_samples:
+                      type: integer
+                      description: The amount of samples
+                    n_clusters:
+                      type: integer
+                      description: The number of clusters (applies only to the clustering method)
+                    n_sample_per_cluster:
+                      type: integer
+                      description: The amount of samples per cluster (applies only to the clustering method)
+                    clustering_column_name:
+                      type: list
+                      description:  The column name to base the clustering (applies only to the clustering method)
+                    to_stratify:
+                      type: list
+                      description: The columns that need to produce stratified samples
+                    columns_to_hist:
+                      type: list
+                      description: The columns to take their histograms
+                    n_buckets:
+                      type: list
+                      description: The number of buckets per histogram
+                    geometry_sampling_bounding_box:
+                      type: list
+                      description: The bounding box to get samples within it in the format [xmin, ymin, xmax, ymax]
+                    geometry_simplification_tolerance:
+                      type: float
+                      description: The tolerance for the geometric simplification
+                  required:
+                    - resource
+                    - resource_type
+          responses:
+            200:
+              description: The generated summaries.
+              content:
+                oneOf:
+                  - application/json:
+                      schema:
+                        type: object
+            202:
+              description: Accepted for processing, but summarization has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = SummarizeFileForm()
     validate_form(form, mainLogger)
     tmp_dir: str = get_tmp_dir("summarize")
@@ -2359,6 +2462,109 @@ def summarize_file():
 
 @app.route("/summarize/path", methods=["POST"])
 def summarize_path():
+    """Summarize a vector or tabular file that its path is provided with the request
+        ---
+        post:
+          summary: Summarize a vector file that its path is provided with the request
+          tags:
+            - Summarize
+          requestBody:
+            required: true
+            content:
+               multipart/form-data:
+                schema:
+                  type: object
+                  properties:
+                    resource:
+                      type: string
+                      description: The spatial file's path.
+                    response:
+                      type: string
+                      enum: [prompt, deferred]
+                      default: prompt
+                      description: Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.
+                    resource_type:
+                      type: string
+                      enum: [csv, shp]
+                      description: The file type of the resource
+                    csv_delimiter:
+                      type: string
+                      default: The program will try to detect it automatically
+                      description: The csv file's delimiter if applicable
+                    crs:
+                      type: string
+                      description: The dataset's crs
+
+                    sampling_method:
+                      type: string
+                      enum: [random, stratified, cluster]
+                      description: The sampling method to apply for the tabular data
+                    columns_to_sample:
+                      type: list
+                      description: The names of the columns to sample
+                    n_samples:
+                      type: integer
+                      description: The amount of samples
+                    n_clusters:
+                      type: integer
+                      description: The number of clusters (applies only to the clustering method)
+                    n_sample_per_cluster:
+                      type: integer
+                      description: The amount of samples per cluster (applies only to the clustering method)
+                    clustering_column_name:
+                      type: list
+                      description:  The column name to base the clustering (applies only to the clustering method)
+                    to_stratify:
+                      type: list
+                      description: The columns that need to produce stratified samples
+                    columns_to_hist:
+                      type: list
+                      description: The columns to take their histograms
+                    n_buckets:
+                      type: list
+                      description: The number of buckets per histogram
+                    geometry_sampling_bounding_box:
+                      type: list
+                      description: The bounding box to get samples within it in the format [xmin, ymin, xmax, ymax]
+                    geometry_simplification_tolerance:
+                      type: float
+                      description: The tolerance for the geometric simplification
+                  required:
+                    - resource
+                    - resource_type
+          responses:
+            200:
+              description: The generated summaries.
+              content:
+                oneOf:
+                  - application/json:
+                      schema:
+                        type: object
+            202:
+              description: Accepted for processing, but summarization has not been completed.
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        type: string
+                        description: The ticket corresponding to the request.
+                      endpoint:
+                        type: string
+                        description: The *resource* endpoint to get the resulting resource when ready.
+                      status:
+                        type: string
+                        description: The *status* endpoint to poll for the status of the request.
+              links:
+                GetStatus:
+                  operationId: getStatus
+                  parameters:
+                    ticket: '$response.body#/ticket'
+                  description: The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.
+            400:
+              description: Client error.
+    """
     form = SummarizePathForm()
     validate_form(form, mainLogger)
     src_file_path: str = form.resource.data
@@ -2480,5 +2686,7 @@ with app.test_request_context():
     spec.path(view=profile_path_vector)
     spec.path(view=normalize_file)
     spec.path(view=normalize_path)
+    spec.path(view=summarize_file)
+    spec.path(view=summarize_path)
     spec.path(view=status)
     spec.path(view=resource)

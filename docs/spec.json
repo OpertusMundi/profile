@@ -126,7 +126,7 @@
                                 }
                             ]
                         },
-                        "description": "The input file with all the specidied normalizations applied."
+                        "description": "The input file with all the specified normalizations applied."
                     },
                     "202": {
                         "content": {
@@ -284,7 +284,7 @@
                                 }
                             ]
                         },
-                        "description": "The input file with all the specidied normalizations applied."
+                        "description": "The input file with all the specified normalizations applied."
                     },
                     "202": {
                         "content": {
@@ -2808,6 +2808,317 @@
                 "summary": "Get the status of a profile request.",
                 "tags": [
                     "Status"
+                ]
+            }
+        },
+        "/summarize/file": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "clustering_column_name": {
+                                        "description": "The column name to base the clustering (applies only to the clustering method)",
+                                        "type": "list"
+                                    },
+                                    "columns_to_hist": {
+                                        "description": "The columns to take their histograms",
+                                        "type": "list"
+                                    },
+                                    "columns_to_sample": {
+                                        "description": "The names of the columns to sample",
+                                        "type": "list"
+                                    },
+                                    "crs": {
+                                        "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
+                                    "csv_delimiter": {
+                                        "default": "The program will try to detect it automatically",
+                                        "description": "The csv file's delimiter if applicable",
+                                        "type": "string"
+                                    },
+                                    "geometry_sampling_bounding_box": {
+                                        "description": "The bounding box to get samples within it in the format [xmin, ymin, xmax, ymax]",
+                                        "type": "list"
+                                    },
+                                    "geometry_simplification_tolerance": {
+                                        "description": "The tolerance for the geometric simplification",
+                                        "type": "float"
+                                    },
+                                    "n_buckets": {
+                                        "description": "The number of buckets per histogram",
+                                        "type": "list"
+                                    },
+                                    "n_clusters": {
+                                        "description": "The number of clusters (applies only to the clustering method)",
+                                        "type": "integer"
+                                    },
+                                    "n_sample_per_cluster": {
+                                        "description": "The amount of samples per cluster (applies only to the clustering method)",
+                                        "type": "integer"
+                                    },
+                                    "n_samples": {
+                                        "description": "The amount of samples",
+                                        "type": "integer"
+                                    },
+                                    "resource": {
+                                        "description": "The spatial file.",
+                                        "format": "binary",
+                                        "type": "string"
+                                    },
+                                    "resource_type": {
+                                        "description": "The file type of the resource",
+                                        "enum": [
+                                            "csv",
+                                            "shp"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "response": {
+                                        "default": "prompt",
+                                        "description": "Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.",
+                                        "enum": [
+                                            "prompt",
+                                            "deferred"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "sampling_method": {
+                                        "description": "The sampling method to apply for the tabular data",
+                                        "enum": [
+                                            "random",
+                                            "stratified",
+                                            "cluster"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "to_stratify": {
+                                        "description": "The columns that need to produce stratified samples",
+                                        "type": "list"
+                                    }
+                                },
+                                "required": [
+                                    "resource",
+                                    "resource_type"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "oneOf": [
+                                {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "description": "The generated summaries."
+                    },
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "endpoint": {
+                                            "description": "The *resource* endpoint to get the resulting resource when ready.",
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "description": "The *status* endpoint to poll for the status of the request.",
+                                            "type": "string"
+                                        },
+                                        "ticket": {
+                                            "description": "The ticket corresponding to the request.",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Accepted for processing, but summarization has not been completed.",
+                        "links": {
+                            "GetStatus": {
+                                "description": "The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.",
+                                "operationId": "getStatus",
+                                "parameters": {
+                                    "ticket": "$response.body#/ticket"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error."
+                    }
+                },
+                "summary": "Summarize a vector or tabular file that its provided with the request",
+                "tags": [
+                    "Summarize"
+                ]
+            }
+        },
+        "/summarize/path": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "clustering_column_name": {
+                                        "description": "The column name to base the clustering (applies only to the clustering method)",
+                                        "type": "list"
+                                    },
+                                    "columns_to_hist": {
+                                        "description": "The columns to take their histograms",
+                                        "type": "list"
+                                    },
+                                    "columns_to_sample": {
+                                        "description": "The names of the columns to sample",
+                                        "type": "list"
+                                    },
+                                    "crs": {
+                                        "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
+                                    "csv_delimiter": {
+                                        "default": "The program will try to detect it automatically",
+                                        "description": "The csv file's delimiter if applicable",
+                                        "type": "string"
+                                    },
+                                    "geometry_sampling_bounding_box": {
+                                        "description": "The bounding box to get samples within it in the format [xmin, ymin, xmax, ymax]",
+                                        "type": "list"
+                                    },
+                                    "geometry_simplification_tolerance": {
+                                        "description": "The tolerance for the geometric simplification",
+                                        "type": "float"
+                                    },
+                                    "n_buckets": {
+                                        "description": "The number of buckets per histogram",
+                                        "type": "list"
+                                    },
+                                    "n_clusters": {
+                                        "description": "The number of clusters (applies only to the clustering method)",
+                                        "type": "integer"
+                                    },
+                                    "n_sample_per_cluster": {
+                                        "description": "The amount of samples per cluster (applies only to the clustering method)",
+                                        "type": "integer"
+                                    },
+                                    "n_samples": {
+                                        "description": "The amount of samples",
+                                        "type": "integer"
+                                    },
+                                    "resource": {
+                                        "description": "The spatial file's path.",
+                                        "type": "string"
+                                    },
+                                    "resource_type": {
+                                        "description": "The file type of the resource",
+                                        "enum": [
+                                            "csv",
+                                            "shp"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "response": {
+                                        "default": "prompt",
+                                        "description": "Determines whether the profile process should be promptly initiated (*prompt*) or queued (*deferred*). In the first case, the response waits for the result, in the second the response is immediate returning a ticket corresponding to the request.",
+                                        "enum": [
+                                            "prompt",
+                                            "deferred"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "sampling_method": {
+                                        "description": "The sampling method to apply for the tabular data",
+                                        "enum": [
+                                            "random",
+                                            "stratified",
+                                            "cluster"
+                                        ],
+                                        "type": "string"
+                                    },
+                                    "to_stratify": {
+                                        "description": "The columns that need to produce stratified samples",
+                                        "type": "list"
+                                    }
+                                },
+                                "required": [
+                                    "resource",
+                                    "resource_type"
+                                ],
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "oneOf": [
+                                {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "description": "The generated summaries."
+                    },
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "endpoint": {
+                                            "description": "The *resource* endpoint to get the resulting resource when ready.",
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "description": "The *status* endpoint to poll for the status of the request.",
+                                            "type": "string"
+                                        },
+                                        "ticket": {
+                                            "description": "The ticket corresponding to the request.",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "Accepted for processing, but summarization has not been completed.",
+                        "links": {
+                            "GetStatus": {
+                                "description": "The `ticket` value returned in the response can be used as the `ticket` parameter in `GET /status/{ticket}`.",
+                                "operationId": "getStatus",
+                                "parameters": {
+                                    "ticket": "$response.body#/ticket"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Client error."
+                    }
+                },
+                "summary": "Summarize a vector file that its path is provided with the request",
+                "tags": [
+                    "Summarize"
                 ]
             }
         }
