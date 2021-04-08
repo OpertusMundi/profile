@@ -1,8 +1,10 @@
 from typing import List, Union
-
+from shapely import wkt
 import numpy as np
 import pandas as pd
 from math import floor
+
+from shapely.geometry import Polygon, Point
 
 from geoprofile.forms import BaseSummarizeForm
 
@@ -10,23 +12,24 @@ SAMPLE_CAP = 1 / 100
 DEFAULT_NUMBER_OF_BUCKETS = 10
 
 
-def summarize(df, form: BaseSummarizeForm):
-    json_report = {"column_samples": [], "column_histograms": []}
+def summarize(gdf, form: BaseSummarizeForm):
+    df = pd.DataFrame(gdf.to_geopandas_df().drop(columns='geometry'))
+    json_report = {"column_samples": [], "column_histograms": [], "bounding_box_samples": [], "simplified_geometry": []}
     columns_to_sample = form.columns_to_sample.data
     columns_to_hist = form.columns_to_hist.data
     numeric_columns = df._get_numeric_data().columns
+    n_samples = form.n_samples.data if form.n_samples.data and form.n_samples.data > 0 else floor(len(df.index) * SAMPLE_CAP)
     if form.n_buckets.data:
         n_buckets = form.n_buckets.data
     else:
         n_buckets = DEFAULT_NUMBER_OF_BUCKETS
     if not (columns_to_sample or columns_to_hist):
         for column in df:
-            sample = random_sampling(df[column], floor(len(df.index) * SAMPLE_CAP))
+            sample = random_sampling(df[column], n_samples)
             json_report["column_samples"].append({"column_name": column, "sample": sample})
     else:
         if form.columns_to_sample.data:
             sample_type = columns_to_sample
-            n_samples = form.n_samples.data if form.n_samples.data > 0 else floor(len(df.index) * SAMPLE_CAP)
             for column in df:
                 if column in columns_to_sample:
                     sample = []
@@ -43,6 +46,12 @@ def summarize(df, form: BaseSummarizeForm):
                 if column in columns_to_hist:
                     hist = single_column_histogram(df[column], numeric_columns, n_buckets)
                     json_report["column_histograms"].append({"column_name": column, "histogram": hist})
+    if form.geometry_sampling_bounding_box.data:
+        samples = geo_bounding_box_sampling(gdf, df, n_samples, form.geometry_sampling_bounding_box.data)
+        json_report["bounding_box_samples"].extend(samples)
+    if form.geometry_simplification_tolerance.data:
+        simplified_geometry = geo_vector_simplification(gdf, form.geometry_simplification_tolerance.data)
+        json_report["simplified_geometry"].extend(simplified_geometry)
     return json_report
 
 
@@ -80,6 +89,23 @@ def single_column_histogram(column, numeric_columns: list, n_buckets: int):
     for bucket in hist.index:
         json_hist.append({'bucket': bucket, 'value': hist[bucket]})
     return json_hist
+
+
+def geo_bounding_box_sampling(gdf, df, n_samples: int, bounding_box: list):
+    try:
+        n = define_dataset_sample_number(df, n_samples)
+        bbox = list(map(lambda x: float(x), bounding_box))
+        samples = gdf.profiler.get_sample(n_obs=n, method="random", bbox=bbox)
+    except IndexError:
+        return []
+    else:
+        return samples
+
+
+def geo_vector_simplification(gdf, tolerance: Union[float, list]):
+    simplified_geometry = gdf.constructive.simplify(tolerance, preserve_topology=True)
+    str_geometry = list(simplified_geometry.to_geopandas_df().geometry.apply(lambda x: wkt.dumps(x)))
+    return str_geometry
 
 
 def define_dataset_sample_number(df, n_samples: int):
