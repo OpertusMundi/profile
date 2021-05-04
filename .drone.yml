@@ -4,6 +4,10 @@ kind: pipeline
 type: docker
 name: default
 
+#
+# Steps
+#
+
 steps:
 - name: nosetests
   image: docker:19.03-dind
@@ -30,6 +34,54 @@ steps:
     DATABASE=/work/data/geoprofile-testing.sqlite
     ) | tee $${env_file}
   - docker run --rm -u 1000:1000 -v $PWD:/work -w /work --env-file $${env_file} $${image}
+
+- name: prepare-tags
+  image: busybox:1.32
+  when:
+    event:
+    - tag
+  commands:
+  - tags_file=$(mktemp) 
+  - echo ${DRONE_TAG} | grep -e '^[0-9]\+[.][0-9]\+[.][0-9]\+\([_-][a-z0-9][-.a-z0-9]*\)\?$' | tee -a $${tags_file}
+  - echo ${DRONE_TAG} | grep -o -e '^[0-9]\+[.][0-9]\+[.][0-9]\+' | tee -a $${tags_file}
+  - cat $${tags_file} | xargs echo | tr '[:blank:]' ',' | tr -d '\n' | tee .tags && echo
+
+- name: publish-image-1
+  image: plugins/docker
+  when:
+    event:
+    - tag
+  settings:
+    debug: true
+    username: 
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    repo: opertusmundi/profile
+    mirror: http://registry-mirror:5000
+    build_args:
+    - VERSION=${DRONE_TAG}
+
+- name: publish-image-2
+  image: plugins/docker
+  when:
+    event:
+    - tag
+  settings:
+    debug: true
+    username: 
+      from_secret: registry_username
+    password:
+      from_secret: registry_password
+    repo: registry-dev-1-opertusmundi:30474/opertusmundi/profile
+    mirror: http://registry-mirror:5000
+    registry: registry-dev-1-opertusmundi:30474
+    build_args:
+    - VERSION=${DRONE_TAG}
+
+#
+# Services
+#
 
 services:
 - name: docker
