@@ -1,3 +1,5 @@
+# vim: set syntax=dockerfile:
+
 FROM osgeo/gdal:ubuntu-full-3.1.0 as build-stage-1
 
 RUN apt-get update \
@@ -47,6 +49,7 @@ RUN python -c "import nltk; nltk.download('punkt', '/usr/local/share/nltk_data')
 ENV FLASK_APP="geoprofile" \
     FLASK_ENV="testing" \
     FLASK_DEBUG="false" \
+    INPUT_DIR="./input" \
     OUTPUT_DIR="./output" \
     SHAPE_ENCODING="utf-8"
 

@@ -22,11 +22,12 @@ flask init-db
 The following environment variables should be set:
 - `FLASK_ENV`: `development` or `production`
 - `FLASK_APP`: `geoprofile` (will be automatically set if running as a container)
+- `INPUT_DIR`: The input directory; all input paths will be resolved under this directory. 
 - `OUTPUT_DIR`: The location (full path), which will be used to store the resulting files (for the case of *deferred* request, see below).
 - (optional) `TEMPDIR`: The location of storing temporary files. If not set, the system temporary path location will be used.
 - (optional) `CORS`: List or string of allowed origins. Default: \*.
 - (optional) `LOGGING_FILE_CONFIG`: Logging configuration file, otherwise the default logging configuration file will be used.
-- (optional) `LOGGING_ROOT_LEVEL`: The level of detail for the root logger; one of `DEBUG`, 'INFO', `WARNING`.
+- (optional) `LOGGING_ROOT_LEVEL`: The level of detail for the root logger; one of `DEBUG`, `INFO`, `WARNING`.
 
 A development server could be started with:
 ```
@@ -142,11 +143,15 @@ index of the service, i.e. for development environment http://localhost:5000.
 
 Copy `.env.example` to `.env` and configure if needed (e.g `FLASK_ENV` variable).
 
-Copy `compose.yml.example` to `compose.yml` (or `docker-compose.yml`) and adjust to your needs (e.g. specify volume source locations etc.). You will at least need to configure the network (inside `compose.yml`) to attach to. 
+Copy `compose.yml.example` to `compose.yml` (or `docker-compose.yml`) and adjust to your needs (e.g. specify volume source locations etc.).
 
-For example, you can create a private network named `opertusmundi_network`:
+You need to configure the network to attach to. For example, you can create a private network named `opertusmundi_network`:
 
     docker network create --attachable opertusmundi_network
+
+You also need to configure for volumes used for input/output data. For example, you can create a named volume `opertusmundi_profile_input`:
+
+    docker volume create opertusmundi_profile_input
 
 Build:
 

@@ -8,6 +8,7 @@ build/
 dist/
 certs/
 data/
+input/
 output/
 logs/
 temp/

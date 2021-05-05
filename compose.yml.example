@@ -13,18 +13,22 @@ services:
 
     volumes:
     - type: 'bind'
-      source: './logs'
-      target: '/var/local/geoprofile/logs'
+      source: ./logs
+      target: /var/local/geoprofile/logs
     - type: 'bind'
-      source: './data/secret_key'
-      target: '/var/local/geoprofile/secret_key'
+      source: ./data/secret_key
+      target: /var/local/geoprofile/secret_key
       read_only: true
     - type: 'bind'
-      source: './data/geoprofile.sqlite'
-      target: '/var/local/geoprofile/geoprofile.sqlite'
-    - type: 'bind'
-      source: './output'
-      target: '/var/local/geoprofile/output'
+      source: ./data/geoprofile.sqlite
+      target: /var/local/geoprofile/geoprofile.sqlite
+    - type: 'volume'
+      source: profile_input
+      target: /var/local/geoprofile/input
+      read_only: true
+    - type: 'volume'
+      source: profile_output
+      target: /var/local/geoprofile/output
 
     networks:
     - 'opertusmundi_network'
@@ -33,12 +37,21 @@ services:
     - '5000:5000'
 
     environment:
-      OUTPUT_DIR: '/var/local/geoprofile/output'
+      INPUT_DIR: /var/local/geoprofile/input
+      OUTPUT_DIR: /var/local/geoprofile/output
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
       LOGGING_ROOT_LEVEL: 'INFO'
       CORS: '*'
       PYTHONUNBUFFERED: 1
+
+volumes:
+  profile_input:
+    external: true
+    name: opertusmundi_profile_input
+  profile_output:
+    external: true
+    name: opertusmundi_profile_output
 
 networks:
   opertusmundi_network:

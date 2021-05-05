@@ -55,6 +55,7 @@ ENV FLASK_ENV="production" \
     FLASK_DEBUG="false" \
     LOGGING_ROOT_LEVEL="" \
     INSTANCE_PATH="/var/local/geoprofile/data/" \
+    INPUT_DIR="/var/local/geoprofile/input/" \
     OUTPUT_DIR="/var/local/geoprofile/output/" \
     SECRET_KEY_FILE="/var/local/geoprofile/secret_key" \
     TLS_CERTIFICATE="" \
