@@ -1,6 +1,7 @@
-#!/bin/sh
-#set -x
-set -e
+#!/bin/bash
+set -u -e -o pipefail
+
+[[ "${DEBUG:-f}" != "f" || "${XTRACE:-f}" != "f" ]] && set -x
 
 # Check environment
 
