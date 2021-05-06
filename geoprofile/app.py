@@ -15,7 +15,7 @@ from . import db
 from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm, SummarizeFileForm, \
     SummarizePathForm
 from .logging import getLoggers
-from .normalize.utils import get_geodataframe, normalize_gdf, store_gdf
+from .normalize.utils import normalize_gdf, store_gdf
 from .summarize.summarization import summarize
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
     get_temp_dir, get_resized_report, get_ds, uncompress_file
@@ -129,6 +129,7 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
     mainLogger.info(f'Starting processing ticket: {ticket}')
     try:
         result = None
+        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
         if job_type is JobType.PROFILE:
             result = {}
             if file_type == 'netcdf':
@@ -138,15 +139,15 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
                 ds = get_ds(src_path, form, 'raster')
                 result = get_resized_report(ds, form, 'raster')
             elif file_type == 'vector':
-                ds = get_ds(src_path, form, 'vector')
+                ds = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
                 result = get_resized_report(ds, form, 'vector')
         elif job_type is JobType.NORMALIZE:
-            gdf = get_geodataframe(form, src_path)
+            gdf = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
             gdf = normalize_gdf(form, gdf)
             file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
             result = gdf, form.resource_type.data, file_name
         elif job_type is JobType.SUMMARIZE:
-            gdf = get_geodataframe(form, src_path).to_geopandas_df()
+            gdf = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir).to_geopandas_df()
             df = pd.DataFrame(gdf.drop(columns='geometry'))
             json_summary = summarize(df, form)
             result = json_summary
@@ -1381,7 +1382,7 @@ def profile_path_netcdf():
     form = ProfilePathForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/path/netcdf with file: {form.resource.data}")
-    src_file_path: str = form.resource.data
+    src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
 
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
@@ -1613,7 +1614,7 @@ def profile_path_raster():
     form = ProfilePathForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/path/raster with file: {form.resource.data}")
-    src_file_path: str = form.resource.data
+    src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
 
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
@@ -2062,7 +2063,7 @@ def profile_path_vector():
     form = ProfilePathForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/path/vector with file: {form.resource.data}")
-    src_file_path: str = form.resource.data
+    src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
 
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
@@ -2071,7 +2072,8 @@ def profile_path_vector():
 
     # Wait for results
     if form.response.data == "prompt":
-        ds = get_ds(src_file_path, form, 'vector')
+        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
+        ds = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
         report = get_resized_report(ds, form, 'vector')
         return make_response(report.to_json(), 200)
     # Wait for results
@@ -2085,7 +2087,8 @@ def profile_path_vector():
 def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, src_path: str):
     # Immediate results
     if form.response.data == "prompt":
-        gdf = get_geodataframe(form, src_file_path)
+        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
+        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
         gdf = normalize_gdf(form, gdf)
         file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
         output_file = store_gdf(gdf, form.resource_type.data, file_name, src_path)
@@ -2323,7 +2326,7 @@ def normalize_path():
     """
     form = NormalizePathForm()
     validate_form(form, mainLogger)
-    src_file_path: str = form.resource.data
+    src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
     tmp_dir: str = get_tmp_dir("normalize")
@@ -2334,8 +2337,10 @@ def normalize_path():
 
 def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str):
     # Immediate results
+
     if form.response.data == "prompt":
-        gdf = get_geodataframe(form, src_file_path)
+        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
+        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
         json_summary = summarize(gdf, form)
         return jsonify(json_summary)
     # Wait for results
@@ -2567,7 +2572,7 @@ def summarize_path():
     """
     form = SummarizePathForm()
     validate_form(form, mainLogger)
-    src_file_path: str = form.resource.data
+    src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
     ticket: str = create_ticket()

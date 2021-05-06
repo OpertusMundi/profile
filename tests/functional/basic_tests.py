@@ -118,6 +118,15 @@ def test_profile_vector_file_input_prompt():
     _check_endpoint(path_to_test, data, expected_fields)
 
 
+def test_profile_tabular_vector_file_input_prompt():
+    data = {'resource': (open(corfu_csv_path, 'rb'), 'corfu.csv')}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields)
+
+
 def test_profile_vector_file_input_deferred():
     data = {'resource': (open(vector_sample_path, 'rb'), 'nyc_roads.zip'), 'response': 'deferred'}
     path_to_test = '/profile/file/vector'

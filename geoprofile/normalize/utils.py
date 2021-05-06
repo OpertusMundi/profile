@@ -2,10 +2,8 @@ import csv
 import zipfile
 import os
 from flask import abort
-from flask_wtf import FlaskForm
-import geovaex
 
-from geoprofile.utils import uncompress_file, mkdir
+from ..utils import mkdir
 from .normalization_functions import date_normalization, column_name_normalization, value_cleaning, transliteration, \
     case_normalization, alphabetical_normalization, special_character_normalization, phone_normalization
 
@@ -24,35 +22,6 @@ def make_zip(zip_name, path_to_zip):
     for root, dirs, files in os.walk('.'):
         for file in files:
             zip_handle.write(os.path.join(root, file))
-
-
-def get_geodataframe(form: FlaskForm, src_file_path: str):
-    try:
-        if form.resource_type.data == "csv":
-            csv_file_path = src_file_path.split('.')[0]
-            file_name = csv_file_path + '.arrow'
-            if form.csv_delimiter.data:
-                delimiter = form.csv_delimiter.data
-            else:
-                delimiter = get_delimiter(src_file_path)
-            if form.crs.data:
-                crs = form.crs.data
-            else:
-                crs = 'WGS 84'
-            geovaex.io.to_arrow(src_file_path, file_name, crs=crs, delimiter=delimiter, null_values=[" "])
-            gdf = geovaex.open(file_name)
-        elif form.resource_type.data == "shp":
-            shp_file_path = uncompress_file(src_file_path)
-            file_name = shp_file_path + '.arrow'
-            geovaex.io.to_arrow(shp_file_path, file_name)
-            gdf = geovaex.open(file_name)
-        else:
-            gdf = None
-            abort(400, "Not supported file type, the supported ones are csv and shp")
-    except TypeError:
-        abort(400, "Error while reading the file")
-    else:
-        return gdf
 
 
 def perform_date_normalization(form, gdf):

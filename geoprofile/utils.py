@@ -126,10 +126,10 @@ def get_delimiter(ds_path: str):
         return str(s.sniff(first_line).delimiter)
 
 
-def get_ds(src_path: str, form: FlaskForm, geo_type: str):
+def get_ds(src_path: str, form: FlaskForm, geo_type: str, arrow_output_path=None):
     try:
         if geo_type == 'vector' or geo_type == 'netcdf':
-            crs = None
+            crs = 'WGS 84'
             if form.crs.data:
                 crs = form.crs.data
             if geo_type == 'vector':
@@ -139,7 +139,8 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lat_attr = form.lat.data
                 if form.lon.data:
                     lon_attr = form.lon.data
-                return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, crs=crs, delimiter=get_delimiter(src_path), geom=form.geometry.data)
+                return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, crs=crs, delimiter=get_delimiter(src_path),
+                                        geom=form.geometry.data, output_path=arrow_output_path)
             elif geo_type == 'netcdf':
                 lat_attr = 'lat'
                 lon_attr = 'lon'
