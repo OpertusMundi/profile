@@ -51,7 +51,8 @@ RUN mkdir ./logs \
     && chown flask:flask ./logs
 COPY --chown=flask logging.conf .
 
-ENV FLASK_ENV="production" \
+ENV FLASK_APP="geoprofile" \
+    FLASK_ENV="production" \
     FLASK_DEBUG="false" \
     LOGGING_ROOT_LEVEL="" \
     INSTANCE_PATH="/var/local/geoprofile/data/" \

@@ -1,5 +1,3 @@
-# vim: set syntax=dockerfile:
-
 FROM osgeo/gdal:ubuntu-full-3.1.0 as build-stage-1
 
 RUN apt-get update \
@@ -33,18 +31,6 @@ RUN pip3 install --upgrade pip
 COPY requirements.txt requirements-testing.txt ./
 RUN pip3 install --prefix=/usr/local -r requirements.txt -r requirements-testing.txt
 RUN python -c "import nltk; nltk.download('punkt', '/usr/local/share/nltk_data')"
-
-# Get permission for vaex's private files so that the Setup/Teardown does not fail due to insufficient permissions
-#RUN mkdir -p /.vaex/data \
-#    && chmod o+r /.vaex/data \
-#    && touch /.vaex/main.yml \
-#    && chmod o+r /.vaex/main.yml \
-#    && touch /.vaex/webclient.yml \
-#    && chmod o+r /.vaex/webclient.yml \
-#    && touch /.vaex/webserver.yml \
-#    && chmod o+r /.vaex/webserver.yml \
-#    && touch /.vaex/cluster.yml \
-#    && chmod o+r /.vaex/cluster.yml
 
 ENV FLASK_APP="geoprofile" \
     FLASK_ENV="testing" \
