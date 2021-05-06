@@ -16,5 +16,5 @@ temp/
 .env
 docker-compose.yml
 compose-dev.yml
-compose.yml
+docker-compose.yml
 compose-testing.yml
