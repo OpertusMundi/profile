@@ -14,6 +14,7 @@ logs/
 temp/
 *.log
 .env
+compose.yml
 docker-compose.yml
 compose-dev.yml
 docker-compose.yml

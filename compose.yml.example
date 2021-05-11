@@ -10,7 +10,6 @@ services:
       context: .
       args:
         VERSION: "${VERSION}"
-
     volumes:
     - type: 'bind'
       source: ./logs
@@ -19,6 +18,10 @@ services:
       source: ./data/secret_key
       target: /var/local/geoprofile/secret_key
       read_only: true
+    #- type: 'bind'
+    #  source: ./logging-syslog.conf
+    #  target: /var/local/geoprofile/logging.conf
+    #  read_only: true
     - type: 'bind'
       source: ./data/geoprofile.sqlite
       target: /var/local/geoprofile/geoprofile.sqlite
@@ -29,19 +32,18 @@ services:
     - type: 'volume'
       source: profile_output
       target: /var/local/geoprofile/output
-
     networks:
     - 'opertusmundi_network'
-
     ports:
     - '5000:5000'
-
     environment:
       INPUT_DIR: /var/local/geoprofile/input
       OUTPUT_DIR: /var/local/geoprofile/output
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
-      LOGGING_ROOT_LEVEL: 'INFO'
+      #LOGGING_FILE_CONFIG: 'logging.conf'
+      #LOGGING_ROOT_LEVEL: 'INFO'
+      #RSYSLOG_HOST: rsyslog-1
       CORS: '*'
       PYTHONUNBUFFERED: 1
 

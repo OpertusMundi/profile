@@ -22,14 +22,17 @@ if [ ! -f "${SECRET_KEY_FILE}" ]; then
     exit 1
 fi
 
-export LOGGING_FILE_CONFIG="./logging.conf"
 if [ ! -f "${LOGGING_FILE_CONFIG}" ]; then
     echo "LOGGING_FILE_CONFIG (configuration for Python logging) does not exist!" 1>&2
     exit 1
 fi
 
+logging_file_config=${LOGGING_FILE_CONFIG}
+
 if [ -n "${LOGGING_ROOT_LEVEL}" ]; then
-    sed -i -e "/^\[logger_root\]/,/^\[.*/ { s/^level=.*/level=${LOGGING_ROOT_LEVEL}/ }" ${LOGGING_FILE_CONFIG}    
+    logging_file_config=$(mktemp logging-XXXXXXXX.conf)
+    sed -e "/^\[logger_root\]/,/^\[.*/ { s/^level=.*/level=${LOGGING_ROOT_LEVEL}/ }" ${LOGGING_FILE_CONFIG} \
+        > ${logging_file_config}
 fi
 
 export FLASK_APP="geoprofile"
@@ -57,7 +60,7 @@ if [ -n "${TLS_CERTIFICATE}" ] && [ -n "${TLS_KEY}" ]; then
     server_port="5443"
 fi
 
-exec gunicorn --log-config ${LOGGING_FILE_CONFIG} --access-logfile - \
+exec gunicorn --log-config ${logging_file_config} --access-logfile - \
   --workers ${num_workers} \
   -t ${timeout} \
   --threads ${num_threads} \

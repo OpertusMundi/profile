@@ -54,6 +54,7 @@ COPY --chown=flask logging.conf .
 ENV FLASK_APP="geoprofile" \
     FLASK_ENV="production" \
     FLASK_DEBUG="false" \
+    LOGGING_FILE_CONFIG="logging.conf" \
     LOGGING_ROOT_LEVEL="" \
     INSTANCE_PATH="/var/local/geoprofile/data/" \
     INPUT_DIR="/var/local/geoprofile/input/" \
