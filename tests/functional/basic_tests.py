@@ -11,6 +11,8 @@ from geoprofile.app import app
 from geoprofile.normalize.normalization_functions import date_normalization, phone_normalization, \
     alphabetical_normalization, special_character_normalization, case_normalization, transliteration
 
+URL_ENCODED_STR = "application/x-www-form-urlencoded"
+
 _tempdir: str = ""
 
 
@@ -140,14 +142,14 @@ def test_profile_netcdf_path_input_prompt():
     expected_fields = {'assetType', 'metadata', 'dimensionsSize', 'dimensionsList', 'dimensionsProperties',
                        'variablesSize', 'variablesList', 'variablesProperties', 'mbr', 'temporalExtent',
                        'noDataValues', 'statistics'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
 
 
 def test_profile_netcdf_path_input_deferred():
     data = {'resource': netcdf_sample_path, 'response': 'deferred'}
     path_to_test = '/profile/path/netcdf'
     expected_fields = {'endpoint', 'status', 'ticket'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
 
 
 def test_profile_raster_path_input_prompt():
@@ -155,30 +157,30 @@ def test_profile_raster_path_input_prompt():
     path_to_test = '/profile/path/raster'
     expected_fields = {'assetType', 'info', 'statistics', 'histogram', 'mbr', 'resolution', 'cog', 'numberOfBands',
                        'datatypes', 'noDataValue', 'crs', 'colorInterpretation'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
 
 
 def test_profile_raster_path_input_deferred():
     data = {'resource': raster_sample_path, 'response': 'deferred'}
     path_to_test = '/profile/path/raster'
     expected_fields = {'endpoint', 'status', 'ticket'}
-    _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
 
 
-# def test_profile_vector_path_input_prompt():
-#     data = {'resource':  vector_sample_path}
-#     path_to_test = '/profile/path/vector'
-#     expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
-#                        'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
-#                        'recurring', 'statistics', 'thumbnail'}
-#     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
-#
-#
-# def test_profile_vector_path_input_deferred():
-#     data = {'resource': vector_sample_path, 'response': 'deferred'}
-#     path_to_test = '/profile/path/vector'
-#     expected_fields = {'endpoint', 'status', 'ticket'}
-#     _check_endpoint(path_to_test, data, expected_fields, content_type='application/x-www-form-urlencoded')
+def test_profile_vector_path_input_prompt():
+    data = {'resource':  vector_sample_path}
+    path_to_test = '/profile/path/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
+
+
+def test_profile_vector_path_input_deferred():
+    data = {'resource': vector_sample_path, 'response': 'deferred'}
+    path_to_test = '/profile/path/vector'
+    expected_fields = {'endpoint', 'status', 'ticket'}
+    _check_endpoint(path_to_test, data, expected_fields, content_type=URL_ENCODED_STR)
 
 
 def test_get_health_check():
