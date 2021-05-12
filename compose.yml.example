@@ -32,6 +32,9 @@ services:
     - type: 'volume'
       source: profile_output
       target: /var/local/geoprofile/output
+    - type: 'bind'
+      source: ./temp
+      target: /var/local/geoprofile/temp
     networks:
     - 'opertusmundi_network'
     ports:
@@ -39,6 +42,7 @@ services:
     environment:
       INPUT_DIR: /var/local/geoprofile/input
       OUTPUT_DIR: /var/local/geoprofile/output
+      TEMPDIR: /var/local/geoprofile/temp
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
       #LOGGING_FILE_CONFIG: 'logging.conf'
