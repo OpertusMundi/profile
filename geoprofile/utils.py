@@ -5,6 +5,7 @@ import os
 from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
+from shutil import rmtree, copy
 
 from bigdatavoyant import RasterData
 from flask import abort
@@ -78,13 +79,24 @@ def get_tmp_dir(namespace: str) -> str:
     return tempdir
 
 
-def save_to_temp(form: FlaskForm, tmp_dir: str, ticket: str) -> str:
-    src_path = path.join(tmp_dir, 'src', ticket)
-    mkdir(src_path)
-    filename = secure_filename(form.resource.data.filename)
-    src_file = path.join(src_path, filename)
-    form.resource.data.save(src_file)
-    return src_file
+def save_to_temp(form: FlaskForm, requests_temp_dir: str, input_type: str = "file") -> str:
+    mkdir(requests_temp_dir)
+    if input_type == "file":
+        filename = secure_filename(form.resource.data.filename)
+        dst_file_path = path.join(requests_temp_dir, filename)
+        form.resource.data.save(dst_file_path)
+    else:
+        src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
+        copy(src_file_path, requests_temp_dir)
+        filename = secure_filename(form.resource.data.split(os.sep)[-1])
+        dst_file_path = path.join(requests_temp_dir, filename)
+    return dst_file_path
+
+
+def delete_from_temp(tmp_dir: str, ticket: str) -> None:
+    """Deletes the contents of a request in the temp dir"""
+    request_path = path.join(tmp_dir, ticket)
+    rmtree(request_path)
 
 
 def get_temp_dir():

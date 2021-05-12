@@ -18,18 +18,22 @@ from .logging import getLoggers
 from .normalize.utils import normalize_gdf, store_gdf
 from .summarize.summarization import summarize
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
-    get_temp_dir, get_resized_report, get_ds, uncompress_file
+    get_temp_dir, get_resized_report, get_ds, uncompress_file, delete_from_temp
 
 
 class OutputDirNotSet(Exception):
     pass
 
 
+FILE_NOT_FOUND_MESSAGE = "File not found"
+
 if getenv('OUTPUT_DIR') is None:
     raise OutputDirNotSet('Environment variable OUTPUT_DIR is not set.')
 
 
-FILE_NOT_FOUND_MESSAGE = "File not found"
+PROFILE_TEMP_DIR: str = get_tmp_dir("profile")
+NORMALIZE_TEMP_DIR: str = get_tmp_dir("normalize")
+SUMMARIZE_TEMP_DIR: str = get_tmp_dir("summarize")
 
 # Logging
 mainLogger, accountLogger = getLoggers()
@@ -129,7 +133,6 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
     mainLogger.info(f'Starting processing ticket: {ticket}')
     try:
         result = None
-        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
         if job_type is JobType.PROFILE:
             result = {}
             if file_type == 'netcdf':
@@ -139,15 +142,18 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
                 ds = get_ds(src_path, form, 'raster')
                 result = get_resized_report(ds, form, 'raster')
             elif file_type == 'vector':
-                ds = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
+                requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+                ds = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
                 result = get_resized_report(ds, form, 'vector')
         elif job_type is JobType.NORMALIZE:
-            gdf = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
+            requests_temp_dir: str = path.join(NORMALIZE_TEMP_DIR, ticket)
+            gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
             gdf = normalize_gdf(form, gdf)
             file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
             result = gdf, form.resource_type.data, file_name
         elif job_type is JobType.SUMMARIZE:
-            gdf = get_ds(src_path, form, 'vector', arrow_output_path=arrow_tmp_dir).to_geopandas_df()
+            requests_temp_dir: str = path.join(SUMMARIZE_TEMP_DIR, ticket)
+            gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir).to_geopandas_df()
             df = pd.DataFrame(gdf.drop(columns='geometry'))
             json_summary = summarize(df, form)
             result = json_summary
@@ -452,14 +458,16 @@ def profile_file_netcdf():
     form = ProfileFileForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/file/netcdf with file: {form.resource.data.filename}")
-    tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
-    src_file_path: str = save_to_temp(form, tmp_dir, ticket)
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir)
+    src_file_path = uncompress_file(src_file_path)
 
     # Immediate results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
+        # delete_from_temp(tmp_dir, ticket)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -682,14 +690,16 @@ def profile_file_raster():
     form = ProfileFileForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/file/raster with file: {form.resource.data.filename}")
-    tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
-    src_file_path: str = save_to_temp(form, tmp_dir, ticket)
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir)
+    src_file_path = uncompress_file(src_file_path)
 
     # Wait for results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
         report = get_resized_report(ds, form, 'raster')
+        # delete_from_temp(tmp_dir, ticket)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1129,16 +1139,16 @@ def profile_file_vector():
     form = ProfileFileForm()
     validate_form(form, mainLogger)
     mainLogger.info(f"Starting /profile/file/vector with file: {form.resource.data.filename}")
-    tmp_dir: str = get_tmp_dir("profile")
     ticket: str = create_ticket()
-    src_file_path: str = save_to_temp(form, tmp_dir, ticket)
-
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir)
     src_file_path = uncompress_file(src_file_path)
 
     # Wait for results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
+        # delete_from_temp(tmp_dir, ticket)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1387,6 +1397,11 @@ def profile_path_netcdf():
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
 
+    ticket: str = create_ticket()
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir, input_type="path")
+    src_file_path = uncompress_file(src_file_path)
+
     # Immediate results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
@@ -1394,7 +1409,6 @@ def profile_path_netcdf():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -1619,6 +1633,11 @@ def profile_path_raster():
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
 
+    ticket: str = create_ticket()
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir, input_type="path")
+    src_file_path = uncompress_file(src_file_path)
+
     # Wait for results
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
@@ -1626,7 +1645,6 @@ def profile_path_raster():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="raster", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -2068,30 +2086,30 @@ def profile_path_vector():
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
 
+    ticket: str = create_ticket()
+    requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir, input_type="path")
     src_file_path = uncompress_file(src_file_path)
 
     # Wait for results
     if form.response.data == "prompt":
-        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
-        ds = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
+        ds = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
         report = get_resized_report(ds, form, 'vector')
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
-        ticket: str = create_ticket()
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
 
-def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, src_path: str):
+def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, requests_temp_dir: str):
     # Immediate results
     if form.response.data == "prompt":
-        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
-        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
+        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
         gdf = normalize_gdf(form, gdf)
         file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
-        output_file = store_gdf(gdf, form.resource_type.data, file_name, src_path)
+        output_file = store_gdf(gdf, form.resource_type.data, file_name, requests_temp_dir)
         file_content = open(output_file, 'rb')
         return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
     # Wait for results
@@ -2210,11 +2228,11 @@ def normalize_file():
     """
     form = NormalizeFileForm()
     validate_form(form, mainLogger)
-    tmp_dir: str = get_tmp_dir("normalize")
     ticket: str = create_ticket()
-    src_path: str = path.join(tmp_dir, 'src', ticket)
-    src_file_path: str = save_to_temp(form, src_path, ticket)
-    return normalize_endpoint(form, src_file_path, ticket, src_path)
+    requests_temp_dir: str = path.join(NORMALIZE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir)
+    src_file_path = uncompress_file(src_file_path)
+    return normalize_endpoint(form, src_file_path, ticket, requests_temp_dir)
 
 
 @app.route("/normalize/path", methods=["POST"])
@@ -2329,18 +2347,17 @@ def normalize_path():
     src_file_path: str = path.join(getenv('INPUT_DIR', ''), form.resource.data)
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
-    tmp_dir: str = get_tmp_dir("normalize")
     ticket: str = create_ticket()
-    src_path: str = path.join(tmp_dir, 'src', ticket)
-    return normalize_endpoint(form, src_file_path, ticket, src_path)
+    requests_temp_dir: str = path.join(NORMALIZE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir, input_type="path")
+    src_file_path = uncompress_file(src_file_path)
+    return normalize_endpoint(form, src_file_path, ticket, requests_temp_dir)
 
 
-def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str):
+def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, requests_temp_dir: str):
     # Immediate results
-
     if form.response.data == "prompt":
-        arrow_tmp_dir: str = get_tmp_dir("arrow_files")
-        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=arrow_tmp_dir)
+        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
         json_summary = summarize(gdf, form)
         return jsonify(json_summary)
     # Wait for results
@@ -2458,11 +2475,10 @@ def summarize_file():
     """
     form = SummarizeFileForm()
     validate_form(form, mainLogger)
-    tmp_dir: str = get_tmp_dir("summarize")
     ticket: str = create_ticket()
-    src_path: str = path.join(tmp_dir, 'src', ticket)
-    src_file_path: str = save_to_temp(form, src_path, ticket)
-    return summarize_endpoint(form, src_file_path, ticket)
+    requests_temp_dir: str = path.join(SUMMARIZE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir)
+    return summarize_endpoint(form, src_file_path, ticket, requests_temp_dir)
 
 
 @app.route("/summarize/path", methods=["POST"])
@@ -2576,7 +2592,10 @@ def summarize_path():
     if not path.exists(src_file_path):
         abort(400, FILE_NOT_FOUND_MESSAGE)
     ticket: str = create_ticket()
-    return summarize_endpoint(form, src_file_path, ticket)
+    requests_temp_dir: str = path.join(SUMMARIZE_TEMP_DIR, ticket)
+    src_file_path: str = save_to_temp(form, requests_temp_dir, input_type="path")
+    src_file_path = uncompress_file(src_file_path)
+    return summarize_endpoint(form, src_file_path, ticket, requests_temp_dir)
 
 
 @app.route("/status/<ticket>")
