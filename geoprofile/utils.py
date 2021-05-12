@@ -93,9 +93,8 @@ def save_to_temp(form: FlaskForm, requests_temp_dir: str, input_type: str = "fil
     return dst_file_path
 
 
-def delete_from_temp(tmp_dir: str, ticket: str) -> None:
+def delete_from_temp(request_path: str) -> None:
     """Deletes the contents of a request in the temp dir"""
-    request_path = path.join(tmp_dir, ticket)
     rmtree(request_path)
 
 

@@ -135,6 +135,7 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
         result = None
         if job_type is JobType.PROFILE:
             result = {}
+            requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
             if file_type == 'netcdf':
                 ds = get_ds(src_path, form, 'netcdf')
                 result = get_resized_report(ds, form, 'netcdf')
@@ -142,21 +143,23 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
                 ds = get_ds(src_path, form, 'raster')
                 result = get_resized_report(ds, form, 'raster')
             elif file_type == 'vector':
-                requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
                 ds = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
                 result = get_resized_report(ds, form, 'vector')
+            delete_from_temp(requests_temp_dir)
         elif job_type is JobType.NORMALIZE:
             requests_temp_dir: str = path.join(NORMALIZE_TEMP_DIR, ticket)
             gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
             gdf = normalize_gdf(form, gdf)
             file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
             result = gdf, form.resource_type.data, file_name
+            delete_from_temp(requests_temp_dir)
         elif job_type is JobType.SUMMARIZE:
             requests_temp_dir: str = path.join(SUMMARIZE_TEMP_DIR, ticket)
             gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir).to_geopandas_df()
             df = pd.DataFrame(gdf.drop(columns='geometry'))
             json_summary = summarize(df, form)
             result = json_summary
+            delete_from_temp(requests_temp_dir)
     except Exception as e:
         mainLogger.error(f'Processing of ticket: {ticket} failed')
         return ticket, None, 0, str(e)
@@ -467,7 +470,7 @@ def profile_file_netcdf():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
-        # delete_from_temp(tmp_dir, ticket)
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -699,7 +702,7 @@ def profile_file_raster():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
         report = get_resized_report(ds, form, 'raster')
-        # delete_from_temp(tmp_dir, ticket)
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1148,7 +1151,7 @@ def profile_file_vector():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
-        # delete_from_temp(tmp_dir, ticket)
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1406,6 +1409,7 @@ def profile_path_netcdf():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1642,6 +1646,7 @@ def profile_path_raster():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'raster')
         report = get_resized_report(ds, form, 'raster')
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -2095,6 +2100,7 @@ def profile_path_vector():
     if form.response.data == "prompt":
         ds = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
         report = get_resized_report(ds, form, 'vector')
+        delete_from_temp(requests_temp_dir)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -2111,6 +2117,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
         output_file = store_gdf(gdf, form.resource_type.data, file_name, requests_temp_dir)
         file_content = open(output_file, 'rb')
+        delete_from_temp(requests_temp_dir)
         return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
     # Wait for results
     else:
@@ -2359,6 +2366,7 @@ def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
     if form.response.data == "prompt":
         gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
         json_summary = summarize(gdf, form)
+        delete_from_temp(requests_temp_dir)
         return jsonify(json_summary)
     # Wait for results
     else:
