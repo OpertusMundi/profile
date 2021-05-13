@@ -148,18 +148,15 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
                 ds = get_ds(src_path, form, 'raster')
                 result = get_resized_report(ds, form, 'raster')
             elif file_type == 'vector':
-                requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
-                ds = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
+                ds = get_ds(src_path, form, 'vector')
                 result = get_resized_report(ds, form, 'vector')
         elif job_type is JobType.NORMALIZE:
-            requests_temp_dir: str = path.join(NORMALIZE_TEMP_DIR, ticket)
-            gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir)
+            gdf = get_ds(src_path, form, 'vector')
             gdf = normalize_gdf(form, gdf)
             file_name = path.split(src_path)[1].split('.')[0] + '_normalized'
             result = gdf, form.resource_type.data, file_name
         elif job_type is JobType.SUMMARIZE:
-            requests_temp_dir: str = path.join(SUMMARIZE_TEMP_DIR, ticket)
-            gdf = get_ds(src_path, form, 'vector', arrow_output_path=requests_temp_dir).to_geopandas_df()
+            gdf = get_ds(src_path, form, 'vector').to_geopandas_df()
             df = pd.DataFrame(gdf.drop(columns='geometry'))
             json_summary = summarize(df, form)
             result = json_summary
@@ -2121,7 +2118,7 @@ def profile_path_vector():
         def cleanup_temp(resp):
             delete_from_temp(requests_temp_dir)
             return resp
-        ds = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
+        ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
         return make_response(report.to_json(), 200)
     # Wait for results
@@ -2138,7 +2135,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         def cleanup_temp(resp):
             delete_from_temp(requests_temp_dir)
             return resp
-        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
+        gdf = get_ds(src_file_path, form, 'vector')
         gdf = normalize_gdf(form, gdf)
         file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
         output_file = store_gdf(gdf, form.resource_type.data, file_name, requests_temp_dir)
@@ -2146,7 +2143,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, form, form=form, job_type=JobType.NORMALIZE)
+        enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.NORMALIZE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
@@ -2393,12 +2390,12 @@ def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         def cleanup_temp(resp):
             delete_from_temp(requests_temp_dir)
             return resp
-        gdf = get_ds(src_file_path, form, 'vector', arrow_output_path=requests_temp_dir)
+        gdf = get_ds(src_file_path, form, 'vector')
         json_summary = summarize(gdf, form)
         return jsonify(json_summary)
     # Wait for results
     else:
-        enqueue.submit(ticket, src_file_path, form, form=form, job_type=JobType.SUMMARIZE)
+        enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.SUMMARIZE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
 
