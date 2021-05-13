@@ -67,6 +67,24 @@ def _check_endpoint(path_to_test: str, data: dict, expected_fields: set, content
         r = json.loads(res.get_data(as_text=True))
         _check_all_fields_are_present(expected_fields, r, path_to_test)
 
+
+def _check_endpoint_with_metadata(path_to_test: str, data: dict, expected_fields: set,
+                                  content_type: str = 'multipart/form-data'):
+    """Check an endpoint of the profile microservice"""
+    with app.test_client() as client:
+        # Test if it fails when no file is submitted
+        # res = client.post(path_to_test, content_type=content_type)
+        # assert res.status_code == 400
+        # Test if it succeeds when a file is submitted
+        res = client.post(path_to_test, data=data, content_type=content_type)
+        assert res.status_code in [200, 202]
+        # Test if it returns the expected fields
+        r = json.loads(res.get_data(as_text=True))
+        _check_all_fields_are_present(expected_fields, r, path_to_test)
+        # Test if metadata are generated
+        assert r['mbrStatic'] is not None and r['convexHullStatic'] is not None and r['heatmap'] is not None
+
+
 #
 # Tests
 #
@@ -81,7 +99,7 @@ def test_get_documentation_1():
 
 
 def test_profile_netcdf_file_input_prompt():
-    data = {'resource': (open(netcdf_sample_path, 'rb'), 'sample_netcdf.nc')}
+    data = {'resource': (open(netcdf_sample_path, 'rb'), 'profile_netcdf_file_input_prompt.nc')}
     logging.warning(data)
     path_to_test = '/profile/file/netcdf'
     expected_fields = {'assetType', 'metadata', 'dimensionsSize', 'dimensionsList', 'dimensionsProperties',
@@ -91,14 +109,15 @@ def test_profile_netcdf_file_input_prompt():
 
 
 def test_profile_netcdf_file_input_deferred():
-    data = {'resource': (open(netcdf_sample_path, 'rb'), 'sample_netcdf.nc'), 'response': 'deferred'}
+    data = {'resource': (open(netcdf_sample_path, 'rb'), 'profile_netcdf_file_input_deferred.nc'),
+            'response': 'deferred'}
     path_to_test = '/profile/file/netcdf'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
 def test_profile_raster_file_input_prompt():
-    data = {'resource': (open(raster_sample_path, 'rb'), 'sample_512.tif')}
+    data = {'resource': (open(raster_sample_path, 'rb'), 'profile_raster_file_input_prompt.tif')}
     path_to_test = '/profile/file/raster'
     expected_fields = {'assetType', 'info', 'statistics', 'histogram', 'mbr', 'resolution', 'cog', 'numberOfBands',
                        'datatypes', 'noDataValue', 'crs', 'colorInterpretation'}
@@ -106,23 +125,24 @@ def test_profile_raster_file_input_prompt():
 
 
 def test_profile_raster_file_input_deferred():
-    data = {'resource': (open(raster_sample_path, 'rb'), 'sample_512.tif'), 'response': 'deferred'}
+    data = {'resource': (open(raster_sample_path, 'rb'), 'profile_raster_file_input_deferred.tif'),
+            'response': 'deferred'}
     path_to_test = '/profile/file/raster'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
 def test_profile_vector_file_input_prompt():
-    data = {'resource': (open(vector_sample_path, 'rb'), 'nyc_roads.zip')}
+    data = {'resource': (open(vector_sample_path, 'rb'), 'profile_vector_file_input_prompt.zip')}
     path_to_test = '/profile/file/vector'
-    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
-                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
-                       'recurring', 'statistics', 'thumbnail'}
-    _check_endpoint(path_to_test, data, expected_fields)
+    expected_fields = {'assetType', 'mbr', 'mbrStatic', 'featureCount', 'count', 'convexHull', 'convexHullStatic', 'thumbnail',
+                       'crs', 'attributes', 'datatypes', 'distribution', 'quantiles', 'distinct', 'recurring', 'heatmap',
+                       'heatmapStatic', 'clusters', 'clustersStatic', 'statistics'}
+    _check_endpoint_with_metadata(path_to_test, data, expected_fields)
 
 
 def test_profile_tabular_vector_file_input_prompt():
-    data = {'resource': (open(corfu_csv_path, 'rb'), 'corfu.csv')}
+    data = {'resource': (open(corfu_csv_path, 'rb'), 'profile_tabular_vector_file_input_prompt.csv'), 'crs': 'WGS 84'}
     path_to_test = '/profile/file/vector'
     expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
                        'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
@@ -131,7 +151,8 @@ def test_profile_tabular_vector_file_input_prompt():
 
 
 def test_profile_vector_file_input_deferred():
-    data = {'resource': (open(vector_sample_path, 'rb'), 'nyc_roads.zip'), 'response': 'deferred'}
+    data = {'resource': (open(vector_sample_path, 'rb'), 'profile_vector_file_input_deferred.zip'),
+            'response': 'deferred'}
     path_to_test = '/profile/file/vector'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
@@ -239,8 +260,9 @@ def test_normalization_functions():
 
 
 def test_normalize_transliterate_csv_file_input_prompt():
-    payload = {'resource_type': 'csv', "transliteration-0": 'name',
-               'transliteration_lang': 'el', 'resource': (open(corfu_csv_path, 'rb'), 'sample.csv')}
+    payload = {'resource_type': 'csv', "transliteration-0": 'name', 'crs': 'WGS 84',
+               'transliteration_lang': 'el', 'resource': (open(corfu_csv_path, 'rb'),
+                                                          'normalize_transliterate_csv_file_input_prompt.csv')}
     path_to_test = '/normalize/file'
     with app.test_client() as client:
         res = client.post(path_to_test, data=payload, content_type='multipart/form-data')
@@ -252,7 +274,8 @@ def test_normalize_transliterate_csv_file_input_prompt():
 
 
 def test_normalize_csv_file_input_deferred():
-    data = {'resource': (open(corfu_csv_path, 'rb'), 'sample.csv'), 'response': 'deferred', 'resource_type': 'csv'}
+    data = {'resource': (open(corfu_csv_path, 'rb'), 'normalize_csv_file_input_deferred.csv'),
+            'response': 'deferred', 'resource_type': 'csv', 'crs': 'WGS 84'}
     path_to_test = '/normalize/file'
     expected_fields = {'endpoint', 'status', 'ticket'}
     _check_endpoint(path_to_test, data, expected_fields)
