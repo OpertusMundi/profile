@@ -36,7 +36,7 @@ if [ -n "${LOGGING_ROOT_LEVEL}" ]; then
 fi
 
 export FLASK_APP="geoprofile"
-export DATABASE="./geoprofile.sqlite"
+export DATABASE="./data/geoprofile.sqlite"
 export SECRET_KEY="$(cat "${SECRET_KEY_FILE}")"
 
 # Initialize database

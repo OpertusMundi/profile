@@ -12,6 +12,7 @@ input/
 output/
 logs/
 temp/
+secrets/
 *.log
 .env
 compose.yml

@@ -15,7 +15,7 @@ services:
       source: ./logs
       target: /var/local/geoprofile/logs
     - type: 'bind'
-      source: ./data/secret_key
+      source: ./secrets/secret_key
       target: /var/local/geoprofile/secret_key
       read_only: true
     #- type: 'bind'
@@ -23,8 +23,8 @@ services:
     #  target: /var/local/geoprofile/logging.conf
     #  read_only: true
     - type: 'bind'
-      source: ./data/geoprofile.sqlite
-      target: /var/local/geoprofile/geoprofile.sqlite
+      source: ./data/
+      target: /var/local/geoprofile/data
     - type: 'volume'
       source: profile_input
       target: /var/local/geoprofile/input

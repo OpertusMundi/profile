@@ -6,6 +6,7 @@ input
 output
 logs
 temp
+secrets
 README.md
 .env
 docker-compose.yml*

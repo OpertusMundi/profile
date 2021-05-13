@@ -160,9 +160,9 @@ Build:
 Prepare the following files/directories:
 
    * `./data/geoprofile.sqlite`:  the SQLite database (an empty database, if running for first time)
-   * `./data/secret_key`: file needed for signing/encrypting session data
+   * `./secrets/secret_key`: file needed for signing/encrypting session data
    * `./logs`: a directory to keep logs under
-   * `./output`: a directory to be used as root of a hierarchy of output files
+   * `./temp`: a directory to use as scratch space
 
 Start application:
     
