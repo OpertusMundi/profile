@@ -140,9 +140,6 @@ def get_delimiter(ds_path: str):
 def get_ds(src_path: str, form: FlaskForm, geo_type: str):
     try:
         if geo_type == 'vector' or geo_type == 'netcdf':
-            crs = 'WGS 84'
-            if form.crs.data:
-                crs = form.crs.data
             if geo_type == 'vector':
                 lat_attr = None
                 lon_attr = None
@@ -150,8 +147,12 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lat_attr = form.lat.data
                 if form.lon.data:
                     lon_attr = form.lon.data
-                return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, crs=crs, delimiter=get_delimiter(src_path),
-                                        geom=form.geometry.data)
+                if form.crs.data:
+                    return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                            delimiter=get_delimiter(src_path), geom=form.geometry.data)
+                else:
+                    return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
+                                            geom=form.geometry.data)
             elif geo_type == 'netcdf':
                 lat_attr = 'lat'
                 lon_attr = 'lon'
@@ -162,7 +163,11 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lon_attr = form.lon.data
                 if form.time.data:
                     time_attr = form.time.data
-                return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr, crs=crs)
+                if form.crs.data:
+                    return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr,
+                                            crs=form.crs.data)
+                else:
+                    return bdv.io.read_file(src_path, type='netcdf', lat=lat_attr, lon=lon_attr, time=time_attr)
         elif geo_type == 'raster':
             return RasterData.from_file(src_path)
     except FileNotFoundError:

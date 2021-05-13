@@ -709,7 +709,6 @@ def profile_file_raster():
             return resp
         ds = get_ds(src_file_path, form, 'raster')
         response = get_resized_report(ds, form, 'raster').to_json()
-        # delete_from_temp(requests_temp_dir)
         return make_response(response, 200)
     # Wait for results
     else:
