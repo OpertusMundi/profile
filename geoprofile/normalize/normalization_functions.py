@@ -38,16 +38,19 @@ def date_normalization(date_string: str, target_format: str = '%d/%m/%Y'):
 
 
 def phone_normalization(number_string: str, exit_code_digits: str = ''):
-    if number_string:
-        try:
-            int(number_string)
-        except ValueError:
-            pass
-        else:
-            return number_string
-    if number_string.startswith("+") and exit_code_digits:
-        return re.sub('[^0-9]', '', number_string.replace("+", exit_code_digits))
-    return re.sub('[^0-9]', '', number_string)
+    phone_numbers = []
+    if ',' in number_string:
+        phone_numbers = number_string.split(',')
+    else:
+        phone_numbers.append(number_string)
+    return ', '.join([normalize_single_phone_number(number, exit_code_digits) for number in phone_numbers])
+
+
+def normalize_single_phone_number(number_string: str, exit_code_digits: str):
+    normalized_phone = number_string
+    if normalized_phone.startswith("00"):
+        normalized_phone = normalized_phone[2:]
+    return exit_code_digits + re.sub('[^0-9]', '', normalized_phone)
 
 
 def special_character_normalization(literal: str):

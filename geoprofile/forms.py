@@ -101,7 +101,7 @@ class BaseSummarizeForm(BaseForm):
     clustering_column_name = StringField('clustering_column_name', validators=[Optional()])
     to_stratify = FieldList(StringField('to_stratify', validators=[Optional()], default=[]),
                             min_entries=0, validators=[Optional()])
-    columns_to_hist = FieldList(StringField('to_stratify', validators=[Optional()], default=[]),
+    columns_to_hist = FieldList(StringField('columns_to_hist', validators=[Optional()], default=[]),
                                 min_entries=0, validators=[Optional()])
     n_buckets = IntegerField('n_buckets', validators=[Optional()])
     geometry_sampling_bounding_box = FieldList(StringField('geometry_sampling_bounding_box', validators=[Optional()],

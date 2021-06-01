@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 import json
+import numpy as np
 from enum import Enum, auto
 from flask import Flask, abort, jsonify, after_this_request
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
 from os import path, getenv, stat
+
+from flask.json import JSONEncoder
 from flask_cors import CORS
 from flask_executor import Executor
 from flask import make_response, send_file
@@ -23,6 +26,18 @@ from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_tem
 
 class OutputDirNotSet(Exception):
     pass
+
+
+class ProfileJsonEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(JSONEncoder, self).default(obj)
 
 
 FILE_NOT_FOUND_MESSAGE = "File not found"
@@ -63,6 +78,8 @@ app.config.from_mapping(
     SECRET_KEY=secret_key,
     DATABASE=getenv('DATABASE'),
 )
+
+app.json_encoder = ProfileJsonEncoder
 
 
 def executor_callback(future):

@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 from math import floor
 
-from shapely.geometry import Polygon, Point
-
 from geoprofile.forms import BaseSummarizeForm
 
 SAMPLE_CAP = 1 / 100
@@ -23,32 +21,29 @@ def summarize(gdf, form: BaseSummarizeForm):
         n_buckets = form.n_buckets.data
     else:
         n_buckets = DEFAULT_NUMBER_OF_BUCKETS
-    if not (columns_to_sample or columns_to_hist):
+    if columns_to_sample:
+        sample_type = form.sampling_method.data
+        if not sample_type:
+            sample_type = 'random'
         for column in df:
-            sample = random_sampling(df[column], n_samples)
-            json_report["column_samples"].append({"column_name": column, "sample": sample})
-    else:
-        if form.columns_to_sample.data:
-            sample_type = columns_to_sample
-            for column in df:
-                if column in columns_to_sample:
-                    sample = []
-                    if sample_type == 'random':
-                        sample = random_sampling(df[column], n_samples)
-                    elif sample_type == 'stratified':
-                        sample = stratified_sampling(df[column], n_samples, form.to_stratify.data)
-                    elif sample_type == 'cluster':
-                        sample = cluster_sampling(df[column], form.n_clusters.data,
-                                                  form.clustering_column_name.data, form.n_sample_per_cluster.data)
-                    json_report["column_samples"].append({"column_name": column, "sample": sample})
-        if form.columns_to_hist.data:
-            for column in df:
-                if column in columns_to_hist:
-                    hist = single_column_histogram(df[column], numeric_columns, n_buckets)
-                    json_report["column_histograms"].append({"column_name": column, "histogram": hist})
+            if column in columns_to_sample:
+                sample = []
+                if sample_type == 'random':
+                    sample = random_sampling(df[column], n_samples)
+                elif sample_type == 'stratified':
+                    sample = stratified_sampling(df[column], n_samples, form.to_stratify.data)
+                elif sample_type == 'cluster':
+                    sample = cluster_sampling(df[column], form.n_clusters.data,
+                                              form.clustering_column_name.data, form.n_sample_per_cluster.data)
+                json_report["column_samples"].append({"column_name": column, "sample": sample})
+    if form.columns_to_hist.data:
+        for column in df:
+            if column in columns_to_hist:
+                hist = single_column_histogram(df[column], numeric_columns, n_buckets)
+                json_report["column_histograms"].append({"column_name": column, "histogram": hist})
     if form.geometry_sampling_bounding_box.data:
-        samples = geo_bounding_box_sampling(gdf, df, n_samples, form.geometry_sampling_bounding_box.data)
-        json_report["bounding_box_samples"].extend(samples)
+        samples = geo_bounding_box_sampling(gdf, df, n_samples, form.geometry_sampling_bounding_box.data, columns_to_sample)
+        json_report["bounding_box_samples"] = samples
     if form.geometry_simplification_tolerance.data:
         simplified_geometry = geo_vector_simplification(gdf, form.geometry_simplification_tolerance.data)
         json_report["simplified_geometry"].extend(simplified_geometry)
@@ -91,15 +86,20 @@ def single_column_histogram(column, numeric_columns: list, n_buckets: int):
     return json_hist
 
 
-def geo_bounding_box_sampling(gdf, df, n_samples: int, bounding_box: list):
+def geo_bounding_box_sampling(gdf, df, n_samples: int, bounding_box: list, columns_to_sample: list):
     try:
         n = define_dataset_sample_number(df, n_samples)
         bbox = list(map(lambda x: float(x), bounding_box))
         samples = gdf.profiler.get_sample(n_obs=n, method="random", bbox=bbox)
+        samples['geometry'] = samples.geometry.to_wkt().values()
     except IndexError:
         return []
     else:
-        return samples
+        result = samples.to_dict(array_type="list")
+        if columns_to_sample:
+            return {key: result[key] for key in result.keys() if key in columns_to_sample}
+        else:
+            return result
 
 
 def geo_vector_simplification(gdf, tolerance: Union[float, list]):
