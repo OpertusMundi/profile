@@ -36,6 +36,8 @@ class ProfileJsonEncoder(JSONEncoder):
             return float(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, datetime):
+          return obj.isoformat()
         else:
             return super(JSONEncoder, self).default(obj)
 
