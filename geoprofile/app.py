@@ -180,8 +180,8 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
             json_summary = summarize(df, form)
             result = json_summary
     except Exception as e:
-        mainLogger.error(f'Processing of ticket: {ticket} failed')
-        return ticket, None, 0, str(e)
+        mainLogger.error(f'Processing of ticket: {ticket} failed with error `{e}`.')
+        return ticket, None, job_type, 0, str(e)
     else:
         return ticket, result, job_type, 1, None
 
