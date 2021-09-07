@@ -36,8 +36,7 @@ ENV FLASK_APP="geoprofile" \
     FLASK_ENV="testing" \
     FLASK_DEBUG="false" \
     INPUT_DIR="./input" \
-    OUTPUT_DIR="./output" \
-    SHAPE_ENCODING="utf-8"
+    OUTPUT_DIR="./output"
 
 COPY run-nosetests.sh /
 RUN chmod a+x /run-nosetests.sh

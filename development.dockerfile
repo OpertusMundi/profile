@@ -60,8 +60,7 @@ ENV FLASK_APP="geoprofile" \
     OUTPUT_DIR="/var/local/geoprofile/output/" \
     SECRET_KEY_FILE="/var/local/geoprofile/secret_key" \
     TLS_CERTIFICATE="" \
-    TLS_KEY="" \
-    SHAPE_ENCODING="utf-8"
+    TLS_KEY=""
 
 USER flask
 CMD ["/usr/local/bin/docker-command.sh"]
