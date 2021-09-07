@@ -123,7 +123,10 @@ def executor_callback(future):
             delete_from_temp(path.join(NORMALIZE_TEMP_DIR, ticket))
         elif job_type is JobType.SUMMARIZE:
             delete_from_temp(path.join(SUMMARIZE_TEMP_DIR, ticket))
-        mainLogger.info(f'Processing of ticket: {ticket} is completed successfully')
+        if success:
+            mainLogger.info(f'Processing of ticket: {ticket} is completed successfully')
+        else:
+            mainLogger.info(f'Processing of ticket: {ticket} completed with errors')
 
 
 # Ensure the instance folder exists and initialize application, db and executor.
@@ -155,7 +158,8 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
     dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
     dbc.commit()
     dbc.close()
-    mainLogger.info(f'Starting processing ticket: {ticket}')
+    filename = path.basename(src_path)
+    mainLogger.info(f'Starting processing file `{src_path}` with ticket {ticket}')
     try:
         result = None
         if job_type is JobType.PROFILE:
