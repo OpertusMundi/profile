@@ -793,6 +793,10 @@ def profile_file_vector():
                     geometry:
                       type: string
                       description: The column name with the geometry information
+                    encoding:
+                      type: string
+                      description: File encoding
+                      default: utf-8
                   required:
                     - resource
           responses:
@@ -1746,6 +1750,10 @@ def profile_path_vector():
                     geometry:
                       type: string
                       description: The column name with the geometry information
+                    encoding:
+                      type: string
+                      description: File encoding
+                      default: utf-8
                   required:
                     - resource
           responses:

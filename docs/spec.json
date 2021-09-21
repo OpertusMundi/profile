@@ -965,6 +965,11 @@
                                         "description": "The dataset's crs",
                                         "type": "string"
                                     },
+                                    "encoding": {
+                                        "default": "utf-8",
+                                        "description": "File encoding",
+                                        "type": "string"
+                                    },
                                     "geometry": {
                                         "description": "The column name with the geometry information",
                                         "type": "string"
@@ -2155,6 +2160,11 @@
                                     },
                                     "crs": {
                                         "description": "The dataset's crs",
+                                        "type": "string"
+                                    },
+                                    "encoding": {
+                                        "default": "utf-8",
+                                        "description": "File encoding",
                                         "type": "string"
                                     },
                                     "geometry": {

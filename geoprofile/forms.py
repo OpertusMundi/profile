@@ -1,10 +1,24 @@
 from flask_wtf import FlaskForm
 from wtforms import FileField, StringField, FloatField, IntegerField, FieldList, BooleanField
 from wtforms.validators import DataRequired, AnyOf, Optional
+from wtforms.validators import ValidationError
 import contextily as ctx
 
 
 RESPONSE_ERROR_INPUT_MESSAGE = "Permitted values for response are prompt or deferred"
+
+class EncodingValidator(object):
+    """Validates an encoding field."""
+    def __init__(self, message=None):
+        if not message:
+            message = 'Field must be a valid encoding.'
+        self.message = message
+
+    def __call__(self, form, field):
+        try:
+            ''.encode(encoding=field.data, errors='replace')
+        except LookupError:
+            raise ValidationError(self.message)
 
 
 class BaseForm(FlaskForm):
@@ -17,6 +31,7 @@ class BaseForm(FlaskForm):
     lat = StringField('lat', validators=[Optional()])
     lon = StringField('lon', validators=[Optional()])
     time = StringField('time', validators=[Optional()])
+    encoding = StringField('encoding', default='utf-8', validators=[Optional(), EncodingValidator()])
 
     crs = StringField('crs', validators=[Optional()])
     geometry = StringField('geometry', validators=[Optional()], default='wkt')
