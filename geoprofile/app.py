@@ -17,7 +17,7 @@ import pandas as pd
 from . import db
 from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm, SummarizeFileForm, \
     SummarizePathForm
-from .logging import getLoggers
+from .logging import mainLogger, accountingLogger, exception_as_rfc5424_structured_data
 from .normalize.utils import normalize_gdf, store_gdf
 from .summarize.summarization import summarize
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
@@ -52,8 +52,6 @@ PROFILE_TEMP_DIR: str = get_tmp_dir("profile")
 NORMALIZE_TEMP_DIR: str = get_tmp_dir("normalize")
 SUMMARIZE_TEMP_DIR: str = get_tmp_dir("summarize")
 
-# Logging
-mainLogger, accountLogger = getLoggers()
 
 # OpenAPI documentation
 spec = APISpec(
@@ -114,7 +112,7 @@ def executor_callback(future):
         dbc.execute('UPDATE tickets SET result=?, success=?, status=1, execution_time=?, comment=? WHERE ticket=?;',
                     [filepath, success, execution_time, comment, ticket])
         dbc.commit()
-        accountLogger(ticket=ticket, success=success, execution_start=time, execution_time=execution_time,
+        accountingLogger(ticket=ticket, success=success, execution_start=time, execution_time=execution_time,
                       comment=comment, filesize=filesize)
         dbc.close()
         if job_type is JobType.PROFILE:
@@ -184,7 +182,8 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
             json_summary = summarize(df, form)
             result = json_summary
     except Exception as e:
-        mainLogger.error(f'Processing of ticket: {ticket} failed with error `{e}`.')
+        mainLogger.error(f'Processing of ticket: {ticket} failed with error `{e}`.', 
+            extra=exception_as_rfc5424_structured_data(e))
         return ticket, None, job_type, 0, str(e)
     else:
         return ticket, result, job_type, 1, None
