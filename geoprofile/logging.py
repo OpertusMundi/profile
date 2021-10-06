@@ -19,7 +19,7 @@ def exception_as_rfc5424_structured_data(ex):
     return {
         'structured_data': {
             'mdc': {
-                'exception-message': ex.description,
+                'exception-message': str(ex),
                 'exception': '|'.join(chain.from_iterable((s.splitlines() for s in tb[1:]))),
             }
         }

@@ -1,17 +1,19 @@
 from datetime import datetime, timezone
+from os import path, getenv, stat
 import json
 import numpy as np
 from enum import Enum, auto
+
 from flask import Flask, abort, jsonify, after_this_request
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
-from os import path, getenv, stat
-
 from flask.json import JSONEncoder
 from flask_cors import CORS
 from flask_executor import Executor
 from flask import make_response, send_file
 from flask_wtf import FlaskForm
+import werkzeug.exceptions
+
 import pandas as pd
 
 from . import db
@@ -2776,3 +2778,21 @@ with app.test_request_context():
     spec.path(view=summarize_path)
     spec.path(view=status)
     spec.path(view=resource)
+
+#
+# Exception handlers
+#
+
+# Define a catch-all exception handler that simply logs a proper error message.
+# Note: If actual error handling is needed, consider defining handlers targeting 
+#   more specific exception types (derived from Exception).
+@app.errorhandler(Exception)
+def handle_any_error(ex):
+    exc_message = str(ex)
+    mainLogger.error("Unexpected error: %s", exc_message, extra=exception_as_rfc5424_structured_data(ex))
+    # Convert and return an HTTPException (is a valid response object for Flask)
+    if isinstance(ex, werkzeug.exceptions.HTTPException):
+        return ex
+    else:
+        return werkzeug.exceptions.InternalServerError(exc_message)
+
