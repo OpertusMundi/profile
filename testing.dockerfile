@@ -16,7 +16,7 @@ FROM osgeo/gdal:ubuntu-full-3.1.0
 ARG VERSION
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends sqlite python3-pip libicu-dev python3-icu
+    && apt-get install -y --no-install-recommends python3-pip libicu-dev python3-icu
 
 ENV VERSION="${VERSION}"
 ENV PYTHON_VERSION="3.8"

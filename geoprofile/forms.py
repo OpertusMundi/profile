@@ -7,6 +7,7 @@ import contextily as ctx
 
 RESPONSE_ERROR_INPUT_MESSAGE = "Permitted values for response are prompt or deferred"
 
+
 class EncodingValidator(object):
     """Validates an encoding field."""
     def __init__(self, message=None):

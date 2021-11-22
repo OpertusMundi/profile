@@ -12,20 +12,28 @@ if [ "${python_version}" != "${PYTHON_VERSION}" ]; then
     exit 1
 fi
 
-if [ -z "${OUTPUT_DIR}" ]; then
-    echo "OUTPUT_DIR is not set!" 1>&2
-    exit 1
-fi
 
 if [ ! -f "${SECRET_KEY_FILE}" ]; then
     echo "SECRET_KEY_FILE does not exist!" 1>&2
     exit 1
 fi
 
+for var in 'OUTPUT_DIR' 'DB_ENGINE' 'DB_HOST' 'DB_PORT' 'DB_USER' 'DB_NAME'; do
+  eval value='$'${var}
+  if [ -z ${value} ]; then
+    echo "${var} is not set!" 1>&2 && exit 1
+  fi
+done
+
 if [ ! -f "${LOGGING_FILE_CONFIG}" ]; then
     echo "LOGGING_FILE_CONFIG (configuration for Python logging) does not exist!" 1>&2
     exit 1
 fi
+
+if [ ! -f "${DB_PASS_FILE}" ]; then
+    echo "DB_PASS_FILE does not exist!" 1>&2 && exit 1
+fi
+DB_PASS="$(cat ${DB_PASS_FILE})"
 
 logging_file_config=${LOGGING_FILE_CONFIG}
 
@@ -35,8 +43,8 @@ if [ -n "${LOGGING_ROOT_LEVEL}" ]; then
         > ${logging_file_config}
 fi
 
+export DATABASE_URI="${DB_ENGINE}://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 export FLASK_APP="geoprofile"
-export DATABASE="./data/geoprofile.sqlite"
 export SECRET_KEY="$(cat "${SECRET_KEY_FILE}")"
 
 # Initialize database

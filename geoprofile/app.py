@@ -1,10 +1,12 @@
+import os
 from datetime import datetime, timezone
 from os import path, getenv, stat
 import json
 import numpy as np
 from enum import Enum, auto
 
-from flask import Flask, abort, jsonify, after_this_request
+import sqlalchemy
+from flask import Flask, abort, jsonify, after_this_request, request
 from apispec import APISpec
 from apispec_webframeworks.flask import FlaskPlugin
 from flask.json import JSONEncoder
@@ -16,14 +18,15 @@ import werkzeug.exceptions
 
 import pandas as pd
 
-from . import db
+from .database import db
+from .database.model import Queue
 from .forms import ProfileFileForm, ProfilePathForm, NormalizeFileForm, NormalizePathForm, SummarizeFileForm, \
     SummarizePathForm
 from .logging import mainLogger, accountingLogger, exception_as_rfc5424_structured_data
 from .normalize.utils import normalize_gdf, store_gdf
 from .summarize.summarization import summarize
 from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_temp, check_directory_writable, \
-    get_temp_dir, get_resized_report, get_ds, uncompress_file, delete_from_temp
+    get_resized_report, get_ds, uncompress_file, delete_from_temp
 
 
 class OutputDirNotSet(Exception):
@@ -39,7 +42,7 @@ class ProfileJsonEncoder(JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         elif isinstance(obj, datetime):
-          return obj.isoformat()
+            return obj.isoformat()
         else:
             return super(JSONEncoder, self).default(obj)
 
@@ -78,7 +81,8 @@ else:
     secret_key = getenv('SECRET_KEY') or open(getenv('SECRET_KEY_FILE')).read()
 app.config.from_mapping(
     SECRET_KEY=secret_key,
-    DATABASE=getenv('DATABASE'),
+    SQLALCHEMY_DATABASE_URI=getenv('DATABASE_URI'),
+    SQLALCHEMY_TRACK_MODIFICATIONS=False
 )
 
 app.json_encoder = ProfileJsonEncoder
@@ -106,17 +110,22 @@ def executor_callback(future):
     else:
         filepath = None
     with app.app_context():
-        dbc = db.get_db()
-        db_result = dbc.execute('SELECT requested_time, filesize FROM tickets WHERE ticket = ?;', [ticket]).fetchone()
-        time = db_result['requested_time']
-        filesize = db_result['filesize']
+        elem: Queue = Queue().query.filter_by(ticket=ticket).first()
+        print(elem)
+        time = elem.requested_time
+        filesize = elem.filesize
         execution_time = round((datetime.now(timezone.utc) - time.replace(tzinfo=timezone.utc)).total_seconds(), 3)
-        dbc.execute('UPDATE tickets SET result=?, success=?, status=1, execution_time=?, comment=? WHERE ticket=?;',
-                    [filepath, success, execution_time, comment, ticket])
-        dbc.commit()
+
+        elem.result = filepath
+        elem.success = success
+        elem.status = 1
+        elem.execution_time = execution_time
+        elem.comment = comment
+        db.session.add(elem)
+        db.session.commit()
         accountingLogger(ticket=ticket, success=success, execution_start=time, execution_time=execution_time,
-                      comment=comment, filesize=filesize)
-        dbc.close()
+                         comment=comment, filesize=filesize)
+
         if job_type is JobType.PROFILE:
             delete_from_temp(path.join(PROFILE_TEMP_DIR, ticket))
         elif job_type is JobType.NORMALIZE:
@@ -144,6 +153,10 @@ if getenv('CORS') is not None:
     cors = CORS(app, origins=origins)
 
 
+with app.app_context():
+    import geoprofile.cli
+
+
 class JobType(Enum):
     NORMALIZE = auto()
     PROFILE = auto()
@@ -154,11 +167,9 @@ class JobType(Enum):
 def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_type: JobType) -> tuple:
     """Enqueue a job (in case requested response type is 'deferred')."""
     filesize = stat(src_path).st_size
-    dbc = db.get_db()
-    dbc.execute('INSERT INTO tickets (ticket, filesize) VALUES(?, ?);', [ticket, filesize])
-    dbc.commit()
-    dbc.close()
-    filename = path.basename(src_path)
+    queue = Queue(ticket=ticket, filesize=filesize)
+    db.session.add(queue)
+    db.session.commit()
     mainLogger.info(f'Starting processing file `{src_path}` with ticket {ticket}')
     try:
         result = None
@@ -184,8 +195,8 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
             json_summary = summarize(df, form)
             result = json_summary
     except Exception as e:
-        mainLogger.error(f'Processing of ticket: {ticket} failed with error `{e}`.', 
-            extra=exception_as_rfc5424_structured_data(e))
+        mainLogger.error(f'Processing of ticket: {ticket} failed with error `{e}`.',
+                         extra=exception_as_rfc5424_structured_data(e))
         return ticket, None, job_type, 0, str(e)
     else:
         return ticket, result, job_type, 1, None
@@ -230,24 +241,38 @@ def health_check():
                   value: |-
                     {"status": "OK"}
     """
+    from osgeo import ogr
     mainLogger.info('Performing health checks...')
+
+    msg = {'gdal': 'OK', 'filesystem': 'OK', 'db': 'OK'}
+    sts = True
+
+    for drv in ['CSV', 'GeoJSON', 'ESRI Shapefile']:
+        if ogr.GetDriverByName(drv) is None:
+            msg['gdal'] = 'GDAL is not properly installed.'
+            sts = False
+            break
+
     # Check that temp directory is writable
+    for dir_path in [os.environ['TEMPDIR'], os.environ['OUTPUT_DIR']]:
+        try:
+            check_directory_writable(dir_path)
+        except Exception as e:
+            msg['filesystem'] = str(e)
+            sts = False
+            break
+
     try:
-        check_directory_writable(get_temp_dir())
-    except Exception as exc:
-        return make_response({'status': 'FAILED', 'reason': 'temp directory not writable', 'detail': str(exc)},
-                             200)
-    # Check that we can connect to our PostGIS backend
-    try:
-        dbc = db.get_db()
-        dbc.execute('SELECT 1').fetchone()
-    except Exception as exc:
-        return make_response({'status': 'FAILED', 'reason': 'cannot connect to SQLite backend', 'detail': str(exc)},
-                             200)
-    # Check that we can connect to our Geoserver backend
-    # Todo ...
-    return make_response({'status': 'OK'},
-                         200)
+        url = os.environ['DATABASE_URI']
+        engine = sqlalchemy.create_engine(url)
+        conn = engine.connect()
+        conn.execute('SELECT 1')
+        mainLogger.debug("_checkConnectToDB(): Connected to %s", engine.url)
+    except Exception as e:
+        msg['db'] = str(e)
+        sts = False
+
+    return make_response({'status': 'OK' if sts else 'FAILED', 'details': msg}, 200)
 
 
 @app.route("/profile/file/netcdf", methods=["POST"])
@@ -2706,21 +2731,27 @@ def status(ticket):
         404:
           description: Ticket not found.
     """
-    if ticket is None:
-        return make_response('Ticket is missing.', 400)
-    dbc = db.get_db()
-    results = dbc.execute(
-        'SELECT status, success, requested_time, execution_time, comment FROM tickets WHERE ticket = ?',
-        [ticket]).fetchone()
-    if results is not None:
-        if results['success'] is not None:
-            success = bool(results['success'])
-        else:
-            success = None
-        return make_response({"completed": bool(results['status']), "success": success,
-                              "requested": results['requested_time'], "execution_time(s)": results['execution_time'],
-                              "comment": results['comment']}, 200)
-    return make_response('Not found.', 404)
+    if ticket is not None:
+        queue = Queue().get(ticket=ticket)
+    else:
+        return make_response({"status": "'ticket' is required in query parameters."}, 400)
+    if queue is None:
+        return make_response({"status": "Process not found."}, 404)
+    if queue['result'] is not None:
+        rsrc = {'link': '/resource/{ticket}'.format(ticket=queue['ticket']),
+                'outputPath': queue['result']}
+    else:
+        rsrc = {'link': None, 'outputPath': None}
+    info = {
+        "ticket": queue['ticket'],
+        "requested_time": queue['requested_time'],
+        "executionTime": queue['execution_time'],
+        "success": queue['status'],
+        "completed": True if queue['success'] == 1 else False,
+        "comment": queue['comment'],
+        "resource": rsrc
+    }
+    return make_response(info, 200)
 
 
 @app.route("/resource/<ticket>")
@@ -2752,10 +2783,13 @@ def resource(ticket):
         507:
           description: Resource does not exist.
     """
+    mainLogger.info('API request [endpoint: "%s"]', request.endpoint)
     if ticket is None:
         return make_response('Resource ticket is missing.', 400)
-    dbc = db.get_db()
-    rel_path = dbc.execute('SELECT result FROM tickets WHERE ticket = ?', [ticket]).fetchone()['result']
+    queue = Queue().get(ticket=ticket)
+    if queue is None:
+        return make_response({"status": "Ticket not found."}, 404)
+    rel_path = os.path.join(os.environ['OUTPUT_DIR'], queue['result'])
     if rel_path is None:
         return make_response('Not found.', 404)
     file = path.join(getenv('OUTPUT_DIR'), rel_path)
@@ -2783,6 +2817,7 @@ with app.test_request_context():
 # Exception handlers
 #
 
+
 # Define a catch-all exception handler that simply logs a proper error message.
 # Note: If actual error handling is needed, consider defining handlers targeting 
 #   more specific exception types (derived from Exception).
@@ -2795,4 +2830,3 @@ def handle_any_error(ex):
         return ex
     else:
         return werkzeug.exceptions.InternalServerError(exc_message)
-

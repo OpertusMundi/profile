@@ -10,7 +10,7 @@ setuptools.setup(
         # moved to requirements.txt
     ],
     package_data={'geoprofile': [
-        'logging.conf', 'schema.sql'
+        'logging.conf'
     ]},
     python_requires='>=3.7',
     zip_safe=False,
