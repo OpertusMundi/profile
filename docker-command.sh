@@ -6,34 +6,36 @@ set -u -e -o pipefail
 # Check environment
 
 python_version="$(python3 -c 'import platform; print(platform.python_version())' | cut -d '.' -f 1,2)"
-
 if [ "${python_version}" != "${PYTHON_VERSION}" ]; then
     echo "PYTHON_VERSION (${PYTHON_VERSION}) different with version reported from python3 executable (${python_version})" 1>&2
     exit 1
 fi
 
-
 if [ ! -f "${SECRET_KEY_FILE}" ]; then
-    echo "SECRET_KEY_FILE does not exist!" 1>&2
-    exit 1
+    echo "SECRET_KEY_FILE does not exist!" 1>&2 && exit 1
 fi
 
-for var in 'OUTPUT_DIR' 'DB_ENGINE' 'DB_HOST' 'DB_PORT' 'DB_USER' 'DB_NAME'; do
-  eval value='$'${var}
-  if [ -z ${value} ]; then
-    echo "${var} is not set!" 1>&2 && exit 1
-  fi
-done
+if [ ! -d "${OUTPUT_DIR}" ]; then
+    echo "OUTPUT_DIR is not a directory!" 1>&2 && exit 1 
+fi
+if [ ! -w "${OUTPUT_DIR}" ]; then
+    echo "OUTPUT_DIR is not writable!" 1>&2 && exit 1 
+fi
 
-if [ ! -f "${LOGGING_FILE_CONFIG}" ]; then
-    echo "LOGGING_FILE_CONFIG (configuration for Python logging) does not exist!" 1>&2
-    exit 1
+if [ ! -d "${INPUT_DIR}" ]; then
+    echo "INPUT_DIR is not a directory!" 1>&2 && exit 1 
+fi
+if [ ! -r "${INPUT_DIR}" ]; then
+    echo "INPUT_DIR is not readable!" 1>&2 && exit 1 
 fi
 
 if [ ! -f "${DB_PASS_FILE}" ]; then
     echo "DB_PASS_FILE does not exist!" 1>&2 && exit 1
 fi
-DB_PASS="$(cat ${DB_PASS_FILE})"
+
+if [ ! -f "${LOGGING_FILE_CONFIG}" ]; then
+    echo "LOGGING_FILE_CONFIG (configuration for Python logging) does not exist!" 1>&2 && exit 1
+fi
 
 logging_file_config=${LOGGING_FILE_CONFIG}
 
@@ -43,6 +45,7 @@ if [ -n "${LOGGING_ROOT_LEVEL}" ]; then
         > ${logging_file_config}
 fi
 
+DB_PASS="$(cat ${DB_PASS_FILE} | tr -d '\n')"
 export DATABASE_URI="${DB_ENGINE}://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 export FLASK_APP="geoprofile"
 export SECRET_KEY="$(cat "${SECRET_KEY_FILE}")"
@@ -58,10 +61,11 @@ if [ "${FLASK_ENV}" = "development" ]; then
     exec /usr/local/bin/wsgi.py
 fi
 
-num_workers="4"
+num_workers="${NUM_WORKERS:-4}"
 server_port="5000"
 timeout="1200"
 num_threads="1"
+
 gunicorn_ssl_options=
 if [ -n "${TLS_CERTIFICATE}" ] && [ -n "${TLS_KEY}" ]; then
     gunicorn_ssl_options="--keyfile ${TLS_KEY} --certfile ${TLS_CERTIFICATE}"

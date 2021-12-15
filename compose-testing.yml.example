@@ -23,23 +23,17 @@ services:
       OUTPUT_DIR: '/work/output'
       INSTANCE_PATH: '/work/data'
       DB_ENGINE: 'postgresql'
-      DB_HOST: 'postgres-profile'
+      DB_HOST: 'postgres-1-opertusmundi'
       DB_PORT: '5432'
-      DB_USER: 'profile_service'
-      DB_NAME: 'opertusmundi_profile'
-      DB_PASS: '123456'
+      DB_USER: 'opertusmundi'
+      DB_NAME: 'profile-tests'
+      DB_PASS_FILE: '/work/secrets/database-password'
     working_dir: /work
     user: "1000:1000"
     networks:
-    - 'opertusmundi_dev_network'
-
-  postgres-profile:
-    image: postgres:latest
-    env_file: postgres.env.example
-    networks:
-      - 'opertusmundi_dev_network'
+    - 'opertusmundi_network'
 
 networks:
-  opertusmundi_dev_network: 
+  opertusmundi_network: 
     external: true
 

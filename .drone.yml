@@ -4,11 +4,43 @@ kind: pipeline
 type: docker
 name: default
 
+environment:
+  DATABASE_HOST: postgis-1
+  DATABASE_PORT: '5432'
+  DATABASE_NAME: profile
+  DATABASE_USER: tester1
+
 #
 # Steps
 #
 
 steps:
+
+- name: setup-postgis
+  image: postgres:9.6-alpine
+  when:
+    event:
+    - push
+  environment:
+    DATABASE_POSTGRES_PASSWORD:
+      from_secret: database_postgres_password
+    DATABASE_PASSWORD:
+      from_secret: database_password
+  commands:
+  # Wait for database server to be ready
+  - export PGHOST=$${DATABASE_HOST} PGPORT=$${DATABASE_PORT}
+  - (t=30; while ! pg_isready -U postgres -t 5; do t=$((t - 1)); test $${t} -ne 0; sleep 4s; done)
+  # Setup client
+  - touch ~/.pgpass
+  - chmod og-rwx ~/.pgpass
+  - echo "$${DATABASE_HOST}:$${DATABASE_PORT}:*:postgres:$${DATABASE_POSTGRES_PASSWORD}" >> ~/.pgpass
+  - echo "$${DATABASE_HOST}:$${DATABASE_PORT}:$${DATABASE_NAME}:$${DATABASE_USER}:$${DATABASE_PASSWORD}" >> ~/.pgpass
+  # Create user/database for tests
+  - echo "CREATE USER \"$${DATABASE_USER}\" WITH PASSWORD '$${DATABASE_PASSWORD}'" | psql -U postgres
+  - echo "CREATE DATABASE \"$${DATABASE_NAME}\" WITH OWNER \"$${DATABASE_USER}\"" | psql -U postgres
+  - psql -U postgres -l -A -t
+  - psql -U $${DATABASE_USER} -d $${DATABASE_NAME} -A -t -c '\d'
+
 - name: nosetests
   image: docker:19.03-dind
   when:
@@ -19,6 +51,8 @@ steps:
     path: /var/run
   environment:
     DOCKER_HOST: unix:///var/run/docker.sock
+    DATABASE_PASSWORD:
+      from_secret: database_password
   commands:
   - export image=opertusmundi/geoprofile:${DRONE_COMMIT}-testing
   - (t=10; while ! docker info -f '{{.ID}}' 2>/dev/null; do t=$((t - 1)); test $${t} -ne 0; sleep 1; done)
@@ -28,11 +62,17 @@ steps:
   - >-
     (env -i
     TEMPDIR=/work/temp
+    INPUT_DIR=/work/input
     OUTPUT_DIR=/work/output
     INSTANCE_PATH=/work/data
-    DATABASE=/work/data/geoprofile-testing.sqlite
+    DB_ENGINE=postgresql
+    DB_HOST=$${DATABASE_HOST}
+    DB_PORT=$${DATABASE_PORT}
+    DB_USER=$${DATABASE_USER}
+    DB_NAME=$${DATABASE_NAME}
+    DB_PASS=$${DATABASE_PASSWORD}
     ) | tee $${env_file}
-  - docker run --rm -u 1000:1000 -v $PWD:/work -w /work --env-file $${env_file} $${image}
+  - docker run --rm -u 1000:1000 -v $PWD:/work -w /work --env-file $${env_file} --network host $${image} -v -s
 
 - name: prepare-tags
   image: busybox:1.32
@@ -83,6 +123,7 @@ steps:
 #
 
 services:
+
 - name: docker
   image: docker:19.03-dind
   privileged: true
@@ -91,6 +132,13 @@ services:
   volumes:
   - name: docker_socket
     path: /var/run
+
+- name: postgis-1
+  image: postgis/postgis:9.6-2.5-alpine
+  environment:
+    POSTGRES_PASSWORD:
+      from_secret: database_postgres_password
+
 
 volumes:
 - name: docker_socket

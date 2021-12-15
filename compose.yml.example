@@ -1,67 +1,69 @@
+# vim: set syntax=yaml:
+
 version: '3.6'
 
 services:
-
   profile:
     image: "opertusmundi/profile:${VERSION}"
     build:
       context: .
       args:
         VERSION: "${VERSION}"
-
     volumes:
     - type: 'bind'
       source: ./logs
       target: /var/local/geoprofile/logs
     - type: 'bind'
-      source: ./secrets/db_pass
-      target: /var/local/geoprofile/secrets/db_pass
+      source: ./logging.conf
+      target: /var/local/geoprofile/logging.conf
       read_only: true
     - type: 'bind'
-      source: ./data/secret_key
-      target: /var/local/geoprofile/secret_key
+      source: ./secrets/secret_key
+      target: /secrets/secret_key
       read_only: true
     - type: 'bind'
-      source: ./data/geoprofile.sqlite
-      target: /var/local/geoprofile/geoprofile.sqlite
-    - type: 'bind'
-      source: ./input
+      source: ./secrets/database-password
+      target: /secrets/database-password
+      read_only: true
+    - type: 'volume'
+      source: profile_input
       target: /var/local/geoprofile/input
       read_only: true
+    - type: 'volume'
+      source: profile_output
+      target: /var/local/geoprofile/output
     - type: 'bind'
       source: ./temp
       target: /var/local/geoprofile/temp
-    - type: 'bind'
-      source: ./output
-      target: /var/local/geoprofile/output
-
     networks:
     - 'opertusmundi_network'
-
     ports:
     - '5000:5000'
-
     environment:
       INPUT_DIR: /var/local/geoprofile/input
       OUTPUT_DIR: /var/local/geoprofile/output
       TEMPDIR: /var/local/geoprofile/temp
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
-      LOGGING_ROOT_LEVEL: 'INFO'
       CORS: '*'
       PYTHONUNBUFFERED: 1
+      #LOGGING_FILE_CONFIG: 'logging.conf'
+      #LOGGING_ROOT_LEVEL: 'INFO'
+      #RSYSLOG_HOST: rsyslog-1
       DB_ENGINE: 'postgresql'
-      DB_HOST: 'postgres-profile'
+      DB_HOST: postgres-1-opertusmundi
       DB_PORT: '5432'
-      DB_USER: 'profile_service'
-      DB_NAME: 'opertusmundi_profile'
-      DB_PASS_FILE: '/var/local/geoprofile/secrets/db_pass'
+      DB_USER: opertusmundi
+      DB_NAME: profile
+      DB_PASS_FILE: /secrets/database-password
 
-  postgres-profile:
-    image: postgres:latest
-    env_file: postgres.env.example
-    networks:
-      - 'opertusmundi_network'
+volumes:
+  profile_input:
+    external: true
+    name: opertusmundi_profile_input
+  profile_output:
+    external: true
+    name: opertusmundi_profile_output
 
 networks:
   opertusmundi_network:

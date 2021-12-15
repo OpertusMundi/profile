@@ -62,9 +62,16 @@ ENV FLASK_APP="geoprofile" \
     DATA_DIR="/var/local/geoprofile/data/" \
     INPUT_DIR="/var/local/geoprofile/input/" \
     OUTPUT_DIR="/var/local/geoprofile/output/" \
-    SECRET_KEY_FILE="/var/local/geoprofile/secret_key" \
+    SECRET_KEY_FILE="/secrets/secret_key" \
+    DB_ENGINE="postgresql" \
+    DB_HOST="postgres" \
+    DB_PORT="5432" \
+    DB_USER="opertusmundi" \
+    DB_NAME="profile" \
+    DB_PASS_FILE="/secrets/database-password" \
     TLS_CERTIFICATE="" \
-    TLS_KEY=""
+    TLS_KEY="" \
+    NUM_WORKERS="4"
 
 USER flask
 
