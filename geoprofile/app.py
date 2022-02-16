@@ -82,7 +82,9 @@ else:
 app.config.from_mapping(
     SECRET_KEY=secret_key,
     SQLALCHEMY_DATABASE_URI=getenv('DATABASE_URI'),
-    SQLALCHEMY_TRACK_MODIFICATIONS=False
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    EXECUTOR_TYPE="thread",
+    EXECUTOR_MAX_WORKERS="1"
 )
 
 app.json_encoder = ProfileJsonEncoder
@@ -166,10 +168,6 @@ class JobType(Enum):
 @executor.job
 def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_type: JobType) -> tuple:
     """Enqueue a job (in case requested response type is 'deferred')."""
-    filesize = stat(src_path).st_size
-    queue = Queue(ticket=ticket, filesize=filesize)
-    db.session.add(queue)
-    db.session.commit()
     mainLogger.info(f'Starting processing file `{src_path}` with ticket {ticket}')
     try:
         result = None
@@ -200,6 +198,13 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
         return ticket, None, job_type, 0, str(e)
     else:
         return ticket, result, job_type, 1, None
+
+
+def init_ticket_to_postgres(ticket: str, src_path: str):
+    filesize = stat(src_path).st_size
+    queue = Queue(ticket=ticket, filesize=filesize)
+    db.session.add(queue)
+    db.session.commit()
 
 
 @app.route("/")
@@ -526,6 +531,7 @@ def profile_file_netcdf():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -761,6 +767,7 @@ def profile_file_raster():
         return make_response(response, 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="raster", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -1217,6 +1224,7 @@ def profile_file_vector():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -1478,6 +1486,7 @@ def profile_path_netcdf():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="netcdf", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -1718,6 +1727,7 @@ def profile_path_raster():
         return make_response(response, 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="raster", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -2179,6 +2189,7 @@ def profile_path_vector():
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.PROFILE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -2199,6 +2210,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.NORMALIZE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
@@ -2451,6 +2463,7 @@ def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         return jsonify(json_summary)
     # Wait for results
     else:
+        init_ticket_to_postgres(ticket, src_file_path)
         enqueue.submit(ticket, src_file_path, file_type="vector", form=form, job_type=JobType.SUMMARIZE)
         response = {"ticket": ticket, "endpoint": f"/resource/{ticket}", "status": f"/status/{ticket}"}
         return make_response(response, 202)
