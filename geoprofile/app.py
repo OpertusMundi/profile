@@ -82,6 +82,7 @@ else:
 app.config.from_mapping(
     SECRET_KEY=secret_key,
     SQLALCHEMY_DATABASE_URI=getenv('DATABASE_URI'),
+    SQLALCHEMY_ENGINE_OPTIONS={'pool_size': getenv('SQLALCHEMY_POOL_SIZE', 5), 'pool_recycle': getenv('SQLALCHEMY_POOL_RECYCLE', 1800), 'pool_timeout': getenv('SQLALCHEMY_POOL_TIMEOUT', 10), 'pool_pre_ping': getenv('SQLALCHEMY_PRE_PING', True)},
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     EXECUTOR_TYPE="thread",
     EXECUTOR_MAX_WORKERS="1"

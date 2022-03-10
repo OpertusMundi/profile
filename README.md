@@ -28,6 +28,10 @@ The following environment variables should be set:
 - (optional) `CORS`: List or string of allowed origins. Default: \*.
 - (optional) `LOGGING_FILE_CONFIG`: Logging configuration file, otherwise the default logging configuration file will be used.
 - (optional) `LOGGING_ROOT_LEVEL`: The level of detail for the root logger; one of `DEBUG`, `INFO`, `WARNING`.
+- (optional) `SQLALCHEMY_POOL_SIZE`: The size of the pool to be maintained \[default: 5\].
+- (optional) `SQLALCHEMY_POOL_RECYCLE`:  This parameter prevents the pool from using a particular connection that has passed a certain age (in seconds) \[default: 1800\].
+- (optional) `SQLALCHEMY_POOL_TIMEOUT`: Number of seconds to wait before giving up on getting a connection from the pool \[default: 10\].
+- (optional) `SQLALCHEMY_PRE_PING`: Boolean value, if True will enable the connection pool “pre-ping” feature that tests connections for liveness upon each checkout \[default: True\].
 
 A development server could be started with:
 ```
