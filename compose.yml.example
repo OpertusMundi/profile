@@ -35,6 +35,9 @@ services:
     - type: 'bind'
       source: ./temp
       target: /var/local/geoprofile/temp
+    - type: 'bind'
+      source: ./schemata
+      target: /var/local/geoprofile/schemata
     networks:
     - 'opertusmundi_network'
     ports:
@@ -56,6 +59,7 @@ services:
       DB_USER: opertusmundi
       DB_NAME: profile
       DB_PASS_FILE: /secrets/database-password
+      SCHEMATA_PATH: /var/local/geoprofile/schemata
 
 volumes:
   profile_input:
