@@ -61,10 +61,8 @@ if [ "${FLASK_ENV}" = "development" ]; then
     exec /usr/local/bin/wsgi.py
 fi
 
-num_workers="${NUM_WORKERS:-4}"
 server_port="5000"
 timeout="1200"
-num_threads="1"
 
 gunicorn_ssl_options=
 if [ -n "${TLS_CERTIFICATE}" ] && [ -n "${TLS_KEY}" ]; then
@@ -73,8 +71,7 @@ if [ -n "${TLS_CERTIFICATE}" ] && [ -n "${TLS_KEY}" ]; then
 fi
 
 exec gunicorn --log-config ${logging_file_config} --access-logfile - \
-  --workers ${num_workers} \
+  --worker-class gunicorn.workers.ggevent.GeventWorker \
   -t ${timeout} \
-  --threads ${num_threads} \
   --bind "0.0.0.0:${server_port}" ${gunicorn_ssl_options} \
   geoprofile.app:app
