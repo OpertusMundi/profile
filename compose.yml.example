@@ -4,7 +4,7 @@ version: '3.6'
 
 services:
   profile:
-    image: "opertusmundi/profile:${VERSION}"
+    image: "opertusmundi/profile:${VERSION}-async"
     build:
       context: .
       args:
@@ -40,7 +40,6 @@ services:
     ports:
     - '5000:5000'
     environment:
-      NUM_WORKERS: 4
       INPUT_DIR: /var/local/geoprofile/input
       OUTPUT_DIR: /var/local/geoprofile/output
       TEMPDIR: /tmp
