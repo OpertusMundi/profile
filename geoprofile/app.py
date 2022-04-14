@@ -130,11 +130,11 @@ def executor_callback(future):
                          comment=comment, filesize=filesize)
 
         if job_type is JobType.PROFILE:
-            delete_from_temp(path.join(PROFILE_TEMP_DIR, ticket))
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
         elif job_type is JobType.NORMALIZE:
-            delete_from_temp(path.join(NORMALIZE_TEMP_DIR, ticket))
+            delete_from_temp(NORMALIZE_TEMP_DIR, ticket)
         elif job_type is JobType.SUMMARIZE:
-            delete_from_temp(path.join(SUMMARIZE_TEMP_DIR, ticket))
+            delete_from_temp(SUMMARIZE_TEMP_DIR, ticket)
         if success:
             mainLogger.info(f'Processing of ticket: {ticket} is completed successfully')
         else:

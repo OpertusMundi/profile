@@ -93,9 +93,13 @@ def save_to_temp(form: FlaskForm, requests_temp_dir: str, input_type: str = "fil
     return dst_file_path
 
 
-def delete_from_temp(request_path: str) -> None:
+def delete_from_temp(temp_path: str, ticket: str) -> None:
     """Deletes the contents of a request in the temp dir"""
+    request_path: str = path.join(temp_path, ticket)
     rmtree(request_path)
+    arrow_file_path = request_path + ".arrow"
+    if os.path.isfile(arrow_file_path):
+        os.remove(arrow_file_path)
 
 
 def get_temp_dir():
