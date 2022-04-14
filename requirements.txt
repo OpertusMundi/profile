@@ -1,12 +1,12 @@
-Flask==2.0.2
-Flask-WTF==1.0.0
+Flask==2.1.1
+Flask-WTF==1.0.1
 Flask-Executor==0.10.0
 Flask-Cors==3.0.10
 apispec==4.0.0
 apispec-webframeworks==0.5.2
 Flask-SQLAlchemy==2.5.1
-psycopg2-binary==2.9.2
-click==7.1.2
+psycopg2-binary==2.9.3
+click==8.1.2
 # normalize
 nltk==3.6.5
 polyglot==16.7.4
