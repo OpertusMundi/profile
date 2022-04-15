@@ -525,7 +525,7 @@ def profile_file_netcdf():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
@@ -761,7 +761,7 @@ def profile_file_raster():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'raster')
         response = get_resized_report(ds, form, 'raster').to_json()
