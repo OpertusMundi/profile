@@ -130,11 +130,11 @@ def executor_callback(future):
                          comment=comment, filesize=filesize)
 
         if job_type is JobType.PROFILE:
-            delete_from_temp(path.join(PROFILE_TEMP_DIR, ticket))
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
         elif job_type is JobType.NORMALIZE:
-            delete_from_temp(path.join(NORMALIZE_TEMP_DIR, ticket))
+            delete_from_temp(NORMALIZE_TEMP_DIR, ticket)
         elif job_type is JobType.SUMMARIZE:
-            delete_from_temp(path.join(SUMMARIZE_TEMP_DIR, ticket))
+            delete_from_temp(SUMMARIZE_TEMP_DIR, ticket)
         if success:
             mainLogger.info(f'Processing of ticket: {ticket} is completed successfully')
         else:
@@ -525,7 +525,7 @@ def profile_file_netcdf():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
@@ -761,7 +761,7 @@ def profile_file_raster():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'raster')
         response = get_resized_report(ds, form, 'raster').to_json()
@@ -1218,7 +1218,7 @@ def profile_file_vector():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
@@ -1480,7 +1480,7 @@ def profile_path_netcdf():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'netcdf')
         report = get_resized_report(ds, form, 'netcdf')
@@ -1721,7 +1721,7 @@ def profile_path_raster():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'raster')
         response = get_resized_report(ds, form, 'raster').to_json()
@@ -2183,7 +2183,7 @@ def profile_path_vector():
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'vector')
         report = get_resized_report(ds, form, 'vector')
@@ -2201,7 +2201,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(NORMALIZE_TEMP_DIR, ticket)
             return resp
         gdf = get_ds(src_file_path, form, 'vector')
         gdf = normalize_gdf(form, gdf)
@@ -2457,7 +2457,7 @@ def summarize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
     if form.response.data == "prompt":
         @after_this_request
         def cleanup_temp(resp):
-            delete_from_temp(requests_temp_dir)
+            delete_from_temp(SUMMARIZE_TEMP_DIR, ticket)
             return resp
         gdf = get_ds(src_file_path, form, 'vector')
         json_summary = summarize(gdf, form)
