@@ -153,10 +153,10 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lon_attr = form.lon.data
                 if form.crs.data:
                     return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
-                                            delimiter=get_delimiter(src_path), geom=form.geometry.data, encoding=form.encoding.data)
+                                            delimiter=get_delimiter(src_path), geom=form.geometry.data)
                 else:
                     return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
-                                            geom=form.geometry.data, encoding=form.encoding.data)
+                                            geom=form.geometry.data)
             elif geo_type == 'netcdf':
                 lat_attr = 'lat'
                 lon_attr = 'lon'
