@@ -8,7 +8,7 @@ RUN pip3 install --upgrade pip \
     && pip3 install --prefix=/usr/local "pycld2==0.41"
 
 RUN pip3 install --prefix=/usr/local \
-    git+https://github.com/OpertusMundi/geovaex.git@v0.3.3 \
+    git+https://github.com/OpertusMundi/geovaex.git@v0.3.4 \
     git+https://github.com/OpertusMundi/BigDataVoyant.git@v1.2.9
 
 

@@ -32,7 +32,7 @@ class BaseForm(FlaskForm):
     lat = StringField('lat', validators=[Optional()])
     lon = StringField('lon', validators=[Optional()])
     time = StringField('time', validators=[Optional()])
-    encoding = StringField('encoding', default='utf-8', validators=[Optional(), EncodingValidator()])
+    encoding = StringField('encoding', default=None, validators=[Optional(), EncodingValidator()])
 
     crs = StringField('crs', validators=[Optional()])
     geometry = StringField('geometry', validators=[Optional()], default='wkt')
