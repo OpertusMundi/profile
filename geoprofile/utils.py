@@ -93,9 +93,13 @@ def save_to_temp(form: FlaskForm, requests_temp_dir: str, input_type: str = "fil
     return dst_file_path
 
 
-def delete_from_temp(request_path: str) -> None:
+def delete_from_temp(temp_path: str, ticket: str) -> None:
     """Deletes the contents of a request in the temp dir"""
+    request_path: str = path.join(temp_path, ticket)
     rmtree(request_path)
+    arrow_file_path = request_path + ".arrow"
+    if os.path.isfile(arrow_file_path):
+        os.remove(arrow_file_path)
 
 
 def get_temp_dir():
@@ -148,11 +152,20 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                 if form.lon.data:
                     lon_attr = form.lon.data
                 if form.crs.data:
-                    return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
-                                            delimiter=get_delimiter(src_path), geom=form.geometry.data, encoding=form.encoding.data)
+                    if form.encoding.data is None:
+                        return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                delimiter=get_delimiter(src_path), geom=form.geometry.data)
+                    else:
+                        return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                delimiter=get_delimiter(src_path), geom=form.geometry.data,
+                                                encoding=form.encoding.data)
                 else:
-                    return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
-                                            geom=form.geometry.data, encoding=form.encoding.data)
+                    if form.encoding.data is None:
+                        return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
+                                                geom=form.geometry.data)
+                    else:
+                        return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
+                                                geom=form.geometry.data, encoding=form.encoding.data)
             elif geo_type == 'netcdf':
                 lat_attr = 'lat'
                 lon_attr = 'lon'

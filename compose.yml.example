@@ -38,14 +38,16 @@ services:
     - type: 'bind'
       source: ./schemata
       target: /var/local/geoprofile/schemata
+
     networks:
     - 'opertusmundi_network'
     ports:
     - '5000:5000'
     environment:
+      NUM_WORKERS: 4
       INPUT_DIR: /var/local/geoprofile/input
       OUTPUT_DIR: /var/local/geoprofile/output
-      TEMPDIR: /var/local/geoprofile/temp
+      TEMPDIR: /tmp
       FLASK_ENV: "${FLASK_ENV}"
       FLASK_DEBUG: "${FLASK_DEBUG}"
       CORS: '*'
@@ -60,6 +62,32 @@ services:
       DB_NAME: profile
       DB_PASS_FILE: /secrets/database-password
       SCHEMATA_PATH: /var/local/geoprofile/schemata
+
+    mem_limit: 4096m
+    memswap_limit: 4096m
+
+  # NOTE: Locust service is optional (only for stress-testing the application)
+  locust:
+    image: locustio/locust:2.8.6
+    volumes:
+    - type: bind
+      source: ./data/1.zip
+      target: /data/1.zip
+      read_only: true
+    - type: bind
+      source: ./locustfile.py
+      target: /locustfile.py
+      read_only: true
+    networks:
+    - 'opertusmundi_network'
+    environment:
+      LOCUST_LOCUSTFILE: /locustfile.py
+      LOCUST_HOST: http://profile:5000
+    ports:
+    - '8089:8089'
+    mem_limit: 2048m
+    memswap_limit: 2048m
+
 
 volumes:
   profile_input:

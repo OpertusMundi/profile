@@ -82,7 +82,7 @@ def _check_endpoint_with_metadata(path_to_test: str, data: dict, expected_fields
         r = json.loads(res.get_data(as_text=True))
         _check_all_fields_are_present(expected_fields, r, path_to_test)
         # Test if metadata are generated
-        assert r['mbrStatic'] is not None and r['convexHullStatic'] is not None and r['heatmap'] is not None
+        assert r['mbrStatic'] is not None and r['heatmap'] is not None
 
 
 #
