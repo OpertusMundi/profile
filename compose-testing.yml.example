@@ -28,12 +28,13 @@ services:
       DB_USER: 'opertusmundi'
       DB_NAME: 'profile-tests'
       DB_PASS_FILE: '/work/secrets/database-password'
+      SCHEMATA_PATH: '/work/schemata'
     working_dir: /work
     user: "1000:1000"
     networks:
     - 'opertusmundi_network'
 
 networks:
-  opertusmundi_network: 
+  opertusmundi_network:
     external: true
 

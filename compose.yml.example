@@ -34,7 +34,11 @@ services:
       target: /var/local/geoprofile/output
     - type: 'bind'
       source: ./temp
-      target: /tmp
+      target: /var/local/geoprofile/temp
+    - type: 'bind'
+      source: ./schemata
+      target: /var/local/geoprofile/schemata
+
     networks:
     - 'opertusmundi_network'
     ports:
@@ -57,6 +61,8 @@ services:
       DB_USER: opertusmundi
       DB_NAME: profile
       DB_PASS_FILE: /secrets/database-password
+      SCHEMATA_PATH: /var/local/geoprofile/schemata
+
     mem_limit: 4096m
     memswap_limit: 4096m
 
@@ -81,6 +87,7 @@ services:
     - '8089:8089'
     mem_limit: 2048m
     memswap_limit: 2048m
+
 
 volumes:
   profile_input:
