@@ -13,7 +13,7 @@ DEFAULT_NUMBER_OF_BUCKETS = 10
 def summarize(gdf, form: BaseSummarizeForm):
     df = pd.DataFrame(gdf.to_geopandas_df().drop(columns='geometry'))
     json_report = {"column_samples": [], "column_histograms": [], "bounding_box_samples": [], "simplified_geometry": []}
-    columns_to_sample = form.columns_to_sample.data
+    columns_to_sample = form.columns_to_sample.data if form.columns_to_sample.data else list(df.columns)
     columns_to_hist = form.columns_to_hist.data
     numeric_columns = df._get_numeric_data().columns
     n_samples = form.n_samples.data if form.n_samples.data and form.n_samples.data > 0 else floor(len(df.index) * SAMPLE_CAP)
@@ -110,6 +110,7 @@ def geo_vector_simplification(gdf, tolerance: Union[float, list]):
 
 def define_dataset_sample_number(df, n_samples: int):
     cap = floor(len(df.index) * SAMPLE_CAP)
+    print(cap if cap < n_samples else n_samples)
     return cap if cap < n_samples else n_samples
 
 

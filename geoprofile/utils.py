@@ -2,6 +2,10 @@ import csv
 import tarfile
 import zipfile
 import os
+
+import pandas as pd
+
+from math import floor
 from tempfile import gettempdir, mkstemp
 from uuid import uuid4
 from os import path, makedirs, getenv
@@ -13,6 +17,9 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import secure_filename
 
 import bigdatavoyant as bdv
+
+
+SAMPLE_CAP = 1 / 100
 
 
 def validate_form(form: FlaskForm, logger) -> None:
@@ -112,6 +119,24 @@ def check_directory_writable(d):
     os.unlink(file_name)
 
 
+def define_dataset_sample_number(df, n_samples: int):
+    cap = floor(len(df.index) * SAMPLE_CAP)
+    return cap if cap < n_samples else n_samples
+
+
+def random_sampling(df, n_samples: int):
+    n = define_dataset_sample_number(df, n_samples)
+    return df.sample(n).values.tolist()
+
+
+def get_sample(df):
+    df = pd.DataFrame(df.to_geopandas_df().drop(columns='geometry'))
+    sample = []
+    for column in list(df.columns):
+        sample.append({column: random_sampling(df[column], floor(len(df.index) * SAMPLE_CAP))})
+    return sample
+
+
 def get_resized_report(gdf, form: FlaskForm, geo_type: str):
     ratio = None
     width = 1920
@@ -125,6 +150,8 @@ def get_resized_report(gdf, form: FlaskForm, geo_type: str):
     if geo_type == 'vector':
         report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
                                      aspect_ratio=ratio, width=width, height=height, schemaDefs=os.getenv('SCHEMATA_PATH'))
+        # use the summarizers samples
+        report["samples"] = get_sample(gdf)
     else:
         report = gdf.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
                             aspect_ratio=ratio, width=width, height=height)
