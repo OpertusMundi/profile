@@ -130,7 +130,9 @@ def random_sampling(df, n_samples: int):
 
 
 def get_sample(df, n_samples: int = 4):
-    df = pd.DataFrame(df.to_geopandas_df().drop(columns='geometry'))
+    gp_df = df.to_geopandas_df()
+    gp_df['geometry'] = [geom.wkt for geom in gp_df.geometry]
+    df = pd.DataFrame(gp_df)
     samples = []
     for _ in range(n_samples):
         sample = {}
