@@ -35,7 +35,7 @@ class BaseForm(FlaskForm):
     encoding = StringField('encoding', default=None, validators=[Optional(), EncodingValidator()])
 
     crs = StringField('crs', validators=[Optional()])
-    geometry = StringField('geometry', validators=[Optional()], default='wkt')
+    geometry = StringField('geometry', validators=[Optional()], default=None)
 
     class Meta:
         csrf = False

@@ -18,6 +18,7 @@ from werkzeug.utils import secure_filename
 
 import bigdatavoyant as bdv
 
+import logging
 
 SAMPLE_CAP = 1 / 100
 
@@ -137,7 +138,7 @@ def get_sample(df, n_samples: int = 4):
     for _ in range(n_samples):
         sample = {}
         for column in list(df.columns):
-            sample[column] = random_sampling(df[column], floor(len(df.index) / n_samples * SAMPLE_CAP))
+            sample[column] = random_sampling(df[column], 10)
         samples.append(sample)
     return samples
 

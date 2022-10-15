@@ -35,9 +35,6 @@ services:
     - type: 'bind'
       source: ./temp
       target: /var/local/geoprofile/temp
-    - type: 'bind'
-      source: ./schemata
-      target: /var/local/geoprofile/schemata
 
     networks:
     - 'opertusmundi_network'
@@ -61,7 +58,6 @@ services:
       DB_USER: opertusmundi
       DB_NAME: profile
       DB_PASS_FILE: /secrets/database-password
-      SCHEMATA_PATH: /var/local/geoprofile/schemata
 
     mem_limit: 4096m
     memswap_limit: 4096m
