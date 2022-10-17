@@ -1,4 +1,4 @@
-FROM osgeo/gdal:ubuntu-full-3.1.0 as build-stage-1
+FROM osgeo/gdal:ubuntu-full-3.1.2 as build-stage-1
 
 RUN apt-get update \
     && apt-get install -y gcc make g++ git python3-pip \
@@ -9,10 +9,10 @@ RUN pip3 install --upgrade pip \
 
 RUN pip3 install --prefix=/usr/local \
     git+https://github.com/OpertusMundi/geovaex.git@v0.3.4 \
-    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.3
+    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.5
 
 
-FROM osgeo/gdal:ubuntu-full-3.1.0
+FROM osgeo/gdal:ubuntu-full-3.1.2
 ARG VERSION
 
 LABEL language="python"
@@ -59,6 +59,7 @@ ENV FLASK_APP="geoprofile" \
     LOGGING_FILE_CONFIG="logging.conf" \
     LOGGING_ROOT_LEVEL="" \
     INSTANCE_PATH="/var/local/geoprofile/data/" \
+    SCHEMATA_PATH="/usr/local/geoprofile/geoprofile/schemata" \
     DATA_DIR="/var/local/geoprofile/data/" \
     INPUT_DIR="/var/local/geoprofile/input/" \
     OUTPUT_DIR="/var/local/geoprofile/output/" \

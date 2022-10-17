@@ -9,7 +9,7 @@ RUN pip3 install --upgrade pip \
 
 RUN pip3 install --prefix=/usr/local \
     git+https://github.com/OpertusMundi/geovaex.git@v0.3.4 \
-    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.3
+    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.5
 
 
 FROM osgeo/gdal:ubuntu-full-3.1.0
@@ -56,6 +56,7 @@ ENV FLASK_APP="geoprofile" \
     FLASK_DEBUG="false" \
     LOGGING_ROOT_LEVEL="" \
     INSTANCE_PATH="/var/local/geoprofile/data/" \
+    SCHEMATA_PATH="/usr/local/geoprofile/geoprofile/schemata" \
     INPUT_DIR="/var/local/geoprofile/input/" \
     OUTPUT_DIR="/var/local/geoprofile/output/" \
     SECRET_KEY_FILE="/var/local/geoprofile/secret_key" \

@@ -9,7 +9,7 @@ RUN pip3 install --upgrade pip \
 
 RUN pip3 install --prefix=/usr/local \
     git+https://github.com/OpertusMundi/geovaex.git@v0.3.4 \
-    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.3
+    git+https://github.com/OpertusMundi/BigDataVoyant.git@v2.0.5
 
 
 FROM osgeo/gdal:ubuntu-full-3.1.0
@@ -33,6 +33,7 @@ RUN pip3 install --prefix=/usr/local -r requirements.txt -r requirements-testing
 RUN python -c "import nltk; nltk.download('punkt', '/usr/local/share/nltk_data')"
 
 ENV FLASK_APP="geoprofile" \
+    SCHEMATA_PATH="/usr/local/geoprofile/geoprofile/schemata" \
     FLASK_ENV="testing" \
     FLASK_DEBUG="false" \
     INPUT_DIR="./input" \

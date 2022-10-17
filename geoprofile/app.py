@@ -2208,7 +2208,7 @@ def normalize_endpoint(form: FlaskForm, src_file_path: str, ticket: str, request
         file_name = path.split(src_file_path)[1].split('.')[0] + '_normalized'
         output_file = store_gdf(gdf, form.resource_type.data, file_name, requests_temp_dir)
         file_content = open(output_file, 'rb')
-        return send_file(file_content, attachment_filename=path.basename(output_file), as_attachment=True)
+        return send_file(file_content, download_name=path.basename(output_file), as_attachment=True)
     # Wait for results
     else:
         init_ticket_to_postgres(ticket, src_file_path)

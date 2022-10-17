@@ -18,6 +18,7 @@ from werkzeug.utils import secure_filename
 
 import bigdatavoyant as bdv
 
+import logging
 
 SAMPLE_CAP = 1 / 100
 
@@ -129,12 +130,17 @@ def random_sampling(df, n_samples: int):
     return df.sample(n).values.tolist()
 
 
-def get_sample(df):
-    df = pd.DataFrame(df.to_geopandas_df().drop(columns='geometry'))
-    sample = []
-    for column in list(df.columns):
-        sample.append({column: random_sampling(df[column], floor(len(df.index) * SAMPLE_CAP))})
-    return sample
+def get_sample(df, n_samples: int = 4):
+    gp_df = df.to_geopandas_df()
+    gp_df['geometry'] = [geom.wkt for geom in gp_df.geometry]
+    df = pd.DataFrame(gp_df)
+    samples = []
+    for _ in range(n_samples):
+        sample = {}
+        for column in list(df.columns):
+            sample[column] = random_sampling(df[column], 10)
+        samples.append(sample)
+    return samples
 
 
 def get_resized_report(gdf, form: FlaskForm, geo_type: str):
@@ -151,7 +157,7 @@ def get_resized_report(gdf, form: FlaskForm, geo_type: str):
         report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
                                      aspect_ratio=ratio, width=width, height=height, schemaDefs=os.getenv('SCHEMATA_PATH'))
         # use the summarizers samples
-        # report["samples"] = get_sample(gdf)
+        report["samples"] = get_sample(gdf)
     else:
         report = gdf.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
                             aspect_ratio=ratio, width=width, height=height)
