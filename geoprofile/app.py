@@ -29,6 +29,9 @@ from .utils import create_ticket, get_tmp_dir, mkdir, validate_form, save_to_tem
     get_resized_report, get_ds, uncompress_file, delete_from_temp
 
 
+CONVEX_HULL_MAX_NUM_VERTICES = os.getenv('CONVEX_HULL_MAX_NUM_VERTICES', 1_000_000)
+
+
 class OutputDirNotSet(Exception):
     pass
 
@@ -82,7 +85,10 @@ else:
 app.config.from_mapping(
     SECRET_KEY=secret_key,
     SQLALCHEMY_DATABASE_URI=getenv('DATABASE_URI'),
-    SQLALCHEMY_ENGINE_OPTIONS={'pool_size': getenv('SQLALCHEMY_POOL_SIZE', 5), 'pool_recycle': getenv('SQLALCHEMY_POOL_RECYCLE', 1800), 'pool_timeout': getenv('SQLALCHEMY_POOL_TIMEOUT', 10), 'pool_pre_ping': getenv('SQLALCHEMY_PRE_PING', True)},
+    SQLALCHEMY_ENGINE_OPTIONS={'pool_size': getenv('SQLALCHEMY_POOL_SIZE', 5),
+                               'pool_recycle': getenv('SQLALCHEMY_POOL_RECYCLE', 1800),
+                               'pool_timeout': getenv('SQLALCHEMY_POOL_TIMEOUT', 10),
+                               'pool_pre_ping': getenv('SQLALCHEMY_PRE_PING', True)},
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     EXECUTOR_TYPE="thread",
     EXECUTOR_MAX_WORKERS="1"
@@ -176,13 +182,13 @@ def enqueue(ticket: str, src_path: str, file_type: str, form: FlaskForm, job_typ
             result = {}
             if file_type == 'netcdf':
                 ds = get_ds(src_path, form, 'netcdf')
-                result = get_resized_report(ds, form, 'netcdf')
+                result = get_resized_report(ds, form, 'netcdf', CONVEX_HULL_MAX_NUM_VERTICES)
             elif file_type == 'raster':
                 ds = get_ds(src_path, form, 'raster')
-                result = get_resized_report(ds, form, 'raster')
+                result = get_resized_report(ds, form, 'raster', CONVEX_HULL_MAX_NUM_VERTICES)
             elif file_type == 'vector':
                 ds = get_ds(src_path, form, 'vector')
-                result = get_resized_report(ds, form, 'vector')
+                result = get_resized_report(ds, form, 'vector', CONVEX_HULL_MAX_NUM_VERTICES)
         elif job_type is JobType.NORMALIZE:
             gdf = get_ds(src_path, form, 'vector')
             gdf = normalize_gdf(form, gdf)
@@ -528,7 +534,7 @@ def profile_file_netcdf():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'netcdf')
-        report = get_resized_report(ds, form, 'netcdf')
+        report = get_resized_report(ds, form, 'netcdf', CONVEX_HULL_MAX_NUM_VERTICES)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -764,7 +770,7 @@ def profile_file_raster():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'raster')
-        response = get_resized_report(ds, form, 'raster').to_json()
+        response = get_resized_report(ds, form, 'raster', CONVEX_HULL_MAX_NUM_VERTICES).to_json()
         return make_response(response, 200)
     # Wait for results
     else:
@@ -1221,7 +1227,7 @@ def profile_file_vector():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'vector')
-        report = get_resized_report(ds, form, 'vector')
+        report = get_resized_report(ds, form, 'vector', CONVEX_HULL_MAX_NUM_VERTICES)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1483,7 +1489,7 @@ def profile_path_netcdf():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'netcdf')
-        report = get_resized_report(ds, form, 'netcdf')
+        report = get_resized_report(ds, form, 'netcdf', CONVEX_HULL_MAX_NUM_VERTICES)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
@@ -1724,7 +1730,7 @@ def profile_path_raster():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'raster')
-        response = get_resized_report(ds, form, 'raster').to_json()
+        response = get_resized_report(ds, form, 'raster', CONVEX_HULL_MAX_NUM_VERTICES).to_json()
         return make_response(response, 200)
     # Wait for results
     else:
@@ -2186,7 +2192,7 @@ def profile_path_vector():
             delete_from_temp(PROFILE_TEMP_DIR, ticket)
             return resp
         ds = get_ds(src_file_path, form, 'vector')
-        report = get_resized_report(ds, form, 'vector')
+        report = get_resized_report(ds, form, 'vector', CONVEX_HULL_MAX_NUM_VERTICES)
         return make_response(report.to_json(), 200)
     # Wait for results
     else:
