@@ -20,6 +20,7 @@ import bigdatavoyant as bdv
 
 
 SAMPLE_CAP = 1 / 100
+CONVEX_HULL_MAX_NUM_VERTICES = os.getenv('CONVEX_HULL_MAX_NUM_VERTICES', 1_000_000)
 
 
 def validate_form(form: FlaskForm, logger) -> None:
@@ -142,7 +143,7 @@ def get_sample(df, n_samples: int = 4):
     return samples
 
 
-def get_resized_report(gdf, form: FlaskForm, geo_type: str, convex_hull_max_num_vertices: int):
+def get_resized_report(gdf, form: FlaskForm, geo_type: str):
     ratio = None
     width = 1920
     height = None
@@ -156,13 +157,12 @@ def get_resized_report(gdf, form: FlaskForm, geo_type: str, convex_hull_max_num_
         report = gdf.profiler.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
                                      aspect_ratio=ratio, width=width, height=height,
                                      schemaDefs=os.getenv('SCHEMATA_PATH'),
-                                     convex_hull_max_num_vertices=convex_hull_max_num_vertices)
+                                     convex_hull_max_num_vertices=CONVEX_HULL_MAX_NUM_VERTICES)
         # use the summarizers samples
         report["samples"] = get_sample(gdf)
     else:
         report = gdf.report(basemap_provider=form.basemap_provider.data, basemap_name=form.basemap_name.data,
-                            aspect_ratio=ratio, width=width, height=height,
-                            convex_hull_max_num_vertices=convex_hull_max_num_vertices)
+                            aspect_ratio=ratio, width=width, height=height)
     return report
 
 
