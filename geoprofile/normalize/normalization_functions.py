@@ -21,8 +21,8 @@ RESERVED_TABLE_NAMES = ["layergroup", "all", "public"]
 RESERVED_COLUMN_NAMES = ["tableoid", "xmin", "cmin", "xmax", "cmax", "ctid"]
 
 
-if downloader.status("TASK:transliteration2") != 'installed':
-    downloader.download("TASK:transliteration2", quiet=True)
+# if downloader.status("TASK:transliteration2") != 'installed':
+#     downloader.download("TASK:transliteration2", quiet=True)
 
 
 def date_normalization(date_string: str, target_format: str = '%d/%m/%Y'):
