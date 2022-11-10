@@ -120,7 +120,7 @@ def test_profile_raster_file_input_prompt():
     data = {'resource': (open(raster_sample_path, 'rb'), 'profile_raster_file_input_prompt.tif')}
     path_to_test = '/profile/file/raster'
     expected_fields = {'assetType', 'info', 'statistics', 'histogram', 'mbr', 'resolution', 'cog', 'numberOfBands',
-                       'datatypes', 'noDataValue', 'crs', 'colorInterpretation'}
+                       'datatypes', 'noDataValue', 'crs', 'colorInterpretation', 'thumbnail'}
     _check_endpoint(path_to_test, data, expected_fields)
 
 
