@@ -131,9 +131,12 @@ def random_sampling(df, n_samples: int):
 
 
 def get_sample(df, n_samples: int = 4):
-    gp_df = df.to_geopandas_df()
-    gp_df['geometry'] = [geom.wkt for geom in gp_df.geometry]
-    df = pd.DataFrame(gp_df)
+    try:
+        gp_df = df.to_geopandas_df()
+        gp_df['geometry'] = [geom.wkt for geom in gp_df.geometry]
+        df = pd.DataFrame(gp_df)
+    except AttributeError:
+        df = pd.DataFrame(df)
     samples = []
     for _ in range(n_samples):
         sample = {}
@@ -188,18 +191,31 @@ def get_ds(src_path: str, form: FlaskForm, geo_type: str):
                     lon_attr = form.lon.data
                 if form.crs.data:
                     if form.encoding.data is None:
-                        return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
-                                                delimiter=get_delimiter(src_path), geom=form.geometry.data)
+                        if lat_attr is not None and lon_attr is not None:
+                            return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                    delimiter=get_delimiter(src_path))
+                        return bdv.io.read_file(src_path, crs=form.crs.data, delimiter=get_delimiter(src_path),
+                                                geom=form.geometry.data)
                     else:
-                        return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
-                                                delimiter=get_delimiter(src_path), geom=form.geometry.data,
+                        if lat_attr is not None and lon_attr is not None:
+                            return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                    delimiter=get_delimiter(src_path), encoding=form.encoding.data)
+                        return bdv.io.read_file(src_path, crs=form.crs.data,
+                                                delimiter=get_delimiter(src_path),
+                                                geom=form.geometry.data,
                                                 encoding=form.encoding.data)
                 else:
                     if form.encoding.data is None:
-                        return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
+                        if lat_attr is not None and lon_attr is not None:
+                            return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                    delimiter=get_delimiter(src_path))
+                        return bdv.io.read_file(src_path, delimiter=get_delimiter(src_path),
                                                 geom=form.geometry.data)
                     else:
-                        return bdv.io.read_file(src_path, lat=lat_attr, lon=lon_attr, delimiter=get_delimiter(src_path),
+                        if lat_attr is not None and lon_attr is not None:
+                            return bdv.io.read_file(src_path, lat=lat_attr, crs=form.crs.data, lon=lon_attr,
+                                                    delimiter=get_delimiter(src_path), encoding=form.encoding.data)
+                        return bdv.io.read_file(src_path, delimiter=get_delimiter(src_path),
                                                 geom=form.geometry.data, encoding=form.encoding.data)
             elif geo_type == 'netcdf':
                 lat_attr = 'lat'

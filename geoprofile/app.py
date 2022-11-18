@@ -1216,7 +1216,10 @@ def profile_file_vector():
     requests_temp_dir: str = path.join(PROFILE_TEMP_DIR, ticket)
     src_file_path: str = save_to_temp(form, requests_temp_dir)
     src_file_path = uncompress_file(src_file_path)
-
+    if src_file_path.endswith('.xlsx') or src_file_path.endswith('.xls'):
+        read_file = pd.read_excel(src_file_path)
+        src_file_path = src_file_path.split(".")[0] + ".csv"
+        read_file.to_csv(src_file_path, index=None, header=True)
     # Wait for results
     if form.response.data == "prompt":
         @after_this_request
