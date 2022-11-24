@@ -55,7 +55,10 @@ def get_extracted_path(folder_path: str):
 def uncompress_file(src_file: str) -> str:
     """Checks whether the file is compressed and uncompresses it"""
     try:
-        if not path.isdir(src_file) and not src_file.endswith('.xlsx') and not src_file.endswith('ods'):
+        if not path.isdir(src_file) \
+                and not src_file.endswith('.xlsx') \
+                and not src_file.endswith('ods') \
+                and not src_file.endswith('xls'):
             src_path = path.dirname(src_file)
             if tarfile.is_tarfile(src_file):
                 with tarfile.open(src_file, 'r') as handle:
