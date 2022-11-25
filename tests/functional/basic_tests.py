@@ -43,6 +43,9 @@ vector_sample_path = path.join(dirname, '..', 'test_data/nyc_roads.zip')
 corfu_shp_path = path.join(dirname, '..', 'test_data/get_pois_v02_corfu_2100.zip')
 hotel_shp_path = path.join(dirname, '..', 'test_data/MR_TT_Hotel_THA.zip')
 corfu_csv_path = path.join(dirname, '..', 'test_data/osm20_pois_corfu.csv')
+xlsx_path = path.join(dirname, '..', 'test_data/KFZ_AT_09112022.xlsx')
+xls_path = path.join(dirname, '..', 'test_data/KFZ_AT_09112022.xls')
+lon_lat_csv_path = path.join(dirname, '..', 'test_data/KFZ_AT_09112022_lonlat.csv')
 
 
 def _check_all_fields_are_present(expected: set, r: dict, api_path: str):
@@ -134,6 +137,34 @@ def test_profile_raster_file_input_deferred():
 
 def test_profile_vector_file_input_prompt():
     data = {'resource': (open(vector_sample_path, 'rb'), 'profile_vector_file_input_prompt.zip')}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'assetType', 'mbr', 'mbrStatic', 'featureCount', 'count', 'convexHull', 'convexHullStatic', 'thumbnail',
+                       'crs', 'attributes', 'datatypes', 'distribution', 'quantiles', 'distinct', 'recurring', 'heatmap',
+                       'heatmapStatic', 'clusters', 'clustersStatic', 'statistics'}
+    _check_endpoint_with_metadata(path_to_test, data, expected_fields)
+
+
+def test_profile_xlsx_file_input_prompt():
+    data = {'resource': (open(xlsx_path, 'rb'), 'profile_xlsx_file_input_prompt.xlsx')}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields)
+
+
+def test_profile_xls_file_input_prompt():
+    data = {'resource': (open(xls_path, 'rb'), 'profile_xls_file_input_prompt.xls')}
+    path_to_test = '/profile/file/vector'
+    expected_fields = {'attributes', 'clusters', 'clustersStatic', 'convexHull', 'count', 'crs', 'datatypes',
+                       'distinct', 'distribution', 'featureCount', 'heatmap', 'heatmapStatic', 'mbr', 'quantiles',
+                       'recurring', 'statistics', 'thumbnail'}
+    _check_endpoint(path_to_test, data, expected_fields)
+
+
+def test_profile_vector_lon_lat_file_input_prompt():
+    data = {'resource': (open(lon_lat_csv_path, 'rb'), 'profile_vector_lon_lat_file_input_prompt.csv'),
+            'crs': 'EPSG:4326'}
     path_to_test = '/profile/file/vector'
     expected_fields = {'assetType', 'mbr', 'mbrStatic', 'featureCount', 'count', 'convexHull', 'convexHullStatic', 'thumbnail',
                        'crs', 'attributes', 'datatypes', 'distribution', 'quantiles', 'distinct', 'recurring', 'heatmap',
