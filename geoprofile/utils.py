@@ -52,6 +52,12 @@ def get_extracted_path(folder_path: str):
         return get_extracted_path(path.join(extracted_path, subdirectories[0]))
 
 
+def find_osm_csv_file(folder_path: str):
+    for file in os.listdir(folder_path):
+        if file.endswith(".osm.csv"):
+            return path.join(folder_path, file)
+
+
 def uncompress_file(src_file: str) -> str:
     """Checks whether the file is compressed and uncompresses it"""
     try:
@@ -68,7 +74,10 @@ def uncompress_file(src_file: str) -> str:
             elif zipfile.is_zipfile(src_file):
                 with zipfile.ZipFile(src_file, 'r') as handle:
                     handle.extractall(src_path)
-                    extracted_path = get_extracted_path(src_path)
+                    if src_file.endswith('osm.csv.zip'):
+                        extracted_path = find_osm_csv_file(src_path)
+                    else:
+                        extracted_path = get_extracted_path(src_path)
                     return extracted_path
         return src_file
     except FileNotFoundError:
