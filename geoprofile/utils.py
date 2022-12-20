@@ -148,7 +148,7 @@ def get_sample(df, n_samples: int = 4):
         gp_df['geometry'] = [geom.wkt for geom in gp_df.geometry]
         df = pd.DataFrame(gp_df)
     except AttributeError:
-        df = pd.DataFrame(df)
+        df = pd.DataFrame.from_dict(df.to_dict())
     samples = []
     for _ in range(n_samples):
         sample = {}
